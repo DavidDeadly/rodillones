@@ -6,8 +6,7 @@ interface ErrorProps {
 }
  
 export default function Error({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _,
+  error: _,
   reset,
 }: ErrorProps) {
   return (
