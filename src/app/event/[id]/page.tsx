@@ -47,7 +47,7 @@ export default async function Event({ params }: EventProps) {
   const validation = await v.safeParseAsync(Base64Schema, id);
   const invalidId = !validation.success;
   if (invalidId)
-    return <h1>That's not a valid event ID</h1>
+    return <h1>That&apos;s not a valid event ID</h1>
 
   const docEvent = await EVENTS.findOne({ _id: new ObjectId(validation.output) });
   const notFound = !docEvent;

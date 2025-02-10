@@ -1,12 +1,15 @@
 'use client'
- 
-export default function GlobalError({
-  error,
-  reset,
-}: {
+
+interface ErrorProps {
   error: Error & { digest?: string }
   reset: () => void
-}) {
+}
+ 
+export default function Error({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _,
+  reset,
+}: ErrorProps) {
   return (
     <div>
         <h2>Something went wrong trying to access this event!</h2>
