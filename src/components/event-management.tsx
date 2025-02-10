@@ -58,15 +58,15 @@ export function EventManagement({ event }: EventManagementProps) {
    const [state, dispatch] = useReducer(reducer, event.teams);
 
   useEffect(() => {
-    pusherClient.subscribe(channel);
+    const channelSubscription = pusherClient.subscribe(channel);
 
     const action = ACTION.INSCRIPTION;
-    pusherClient.bind(action, (event: EVENTS[typeof action]) => {
+    channelSubscription.bind(action, (event: EVENTS[typeof action]) => {
       dispatch({ type: action, ...event });
     });
 
     return () =>
-      pusherClient.unsubscribe(channel);
+      channelSubscription.unsubscribe();
   }, []);
 
   const sendMessage = async () => {
