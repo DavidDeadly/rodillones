@@ -1,0 +1,9 @@
+export const {
+	DB,
+	DB_USER,
+	DB_PASS,
+	PUSHER_KEY,
+	PUSHER_SECRET,
+	NEXT_PUBLIC_PUSHER_APP_ID,
+	NEXT_PUBLIC_PUSHER_CLUSTER,
+} = process.env;
