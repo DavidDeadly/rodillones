@@ -1,9 +1,8 @@
 "use server";
 
 import * as v from "valibot";
-import { RegisterResult } from "#/components/event-management";
-import { ACTION, EVENTS } from "./constants";
-import { registerPlayer } from "./event.repository";
+import { ACTION, type EVENTS } from "./constants";
+import { type RegisterResult, registerPlayer } from "./event.repository";
 import { pusher } from "./pusher";
 
 const RegisterPlayer = v.object({
@@ -26,7 +25,8 @@ export async function registerPlayerAction(
 	}
 
 	try {
-		await registerPlayer(eventId, registration);
+		const res = await registerPlayer(eventId, registration);
+		if (res.error) return res;
 	} catch (err) {
 		const error = err as Error;
 		console.error(error.message);

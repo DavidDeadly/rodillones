@@ -6,13 +6,15 @@ import { useEffect, useReducer, useState } from "react";
 import { ACTION, EVENTS } from "#/lib/constants";
 import { pusherClient } from "#/lib/pusher-client";
 import { registerPlayerAction } from "#/lib/action";
-import { Event } from '#/lib/event.repository';
+import { Event, RegisterResult } from '#/lib/event.repository';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
+import { useFormStatus } from "react-dom";
+import { Loader, UserCheck } from "lucide-react";
 
 interface EventManagementProps {
   event: Event;
@@ -111,18 +113,19 @@ export function EventManagement({ event }: EventManagementProps) {
   )
 }
 
-export type RegisterResult =
-	| {
-			error: false;
-	  }
-	| {
-			error: true;
-			msg: string;
-	  };
-
 type RegisterDialogProps = {
   team: string;
   action: (registration: EVENTS[ACTION.INSCRIPTION]) => Promise<RegisterResult>
+}
+
+export function SubmitButton() {
+  const { pending } = useFormStatus()
+ 
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? <Loader className="animate-spin animate"/> : <UserCheck />}
+    </Button>
+  )
 }
 
 export function RegisterDialog({ team, action }: RegisterDialogProps) {
@@ -161,9 +164,7 @@ export function RegisterDialog({ team, action }: RegisterDialogProps) {
           </Label>
           <Input id="link" placeholder="Jose Rueda" value={player} onChange={ev => setPlayer(ev.target.value)}/>
 
-          <Button type="submit">
-            Listo!
-          </Button>
+          <SubmitButton />
         </form>
         </DialogContent>
     </Dialog>

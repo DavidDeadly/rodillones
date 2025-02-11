@@ -58,13 +58,50 @@ export async function findById(id: string): Promise<Event | null> {
 	return event;
 }
 
+const TEAM_LIMIT = 7;
+
+export type RegisterResult =
+	| {
+			error: false;
+	  }
+	| {
+			error: true;
+			msg: string;
+	  };
+
 export async function registerPlayer(
 	id: string,
 	{ team, player }: EVENTS[ACTION.INSCRIPTION],
-): Promise<void> {
+): Promise<RegisterResult> {
 	const validation = await v.safeParseAsync(Base64Schema, id);
 	const invalidId = !validation.success;
 	if (invalidId) throw new Error("Not a valid id");
+
+	const docEvent = await EVENTS.findOne({
+		_id: new ObjectId(validation.output),
+	});
+
+	const notFound = !docEvent;
+	if (notFound)
+		return {
+			error: true,
+			msg: "Este evento no existe",
+		};
+
+	const players = docEvent.teams[team] ?? [];
+	const allPlayers = Object.values(docEvent.teams).flat();
+
+	if (players.length >= TEAM_LIMIT)
+		return {
+			error: true,
+			msg: "Al parecer el equipo ya está completo",
+		};
+
+	if (allPlayers.includes(player))
+		return {
+			error: true,
+			msg: "Este jugador ya está registrado en el evento",
+		};
 
 	await EVENTS.updateOne(
 		{ _id: new ObjectId(id) },
@@ -74,4 +111,8 @@ export async function registerPlayer(
 			},
 		},
 	);
+
+	return {
+		error: false,
+	};
 }
