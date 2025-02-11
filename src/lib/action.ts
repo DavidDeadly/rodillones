@@ -3,6 +3,7 @@
 import * as v from "valibot";
 import { RegisterResult } from "#/components/event-management";
 import { ACTION, EVENTS } from "./constants";
+import { registerPlayer } from "./event.repository";
 import { pusher } from "./pusher";
 
 const RegisterPlayer = v.object({
@@ -21,6 +22,18 @@ export async function registerPlayerAction(
 		return {
 			error: true,
 			msg: "El nombre del jugador debe tener al menos dos caracteres",
+		};
+	}
+
+	try {
+		await registerPlayer(eventId, registration);
+	} catch (err) {
+		const error = err as Error;
+		console.error(error.message);
+
+		return {
+			error: true,
+			msg: "Hubo un error en tu registro",
 		};
 	}
 

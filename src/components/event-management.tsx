@@ -1,21 +1,18 @@
 'use client'
-import { DocEvent } from "#/app/event/[id]/page";
-import { ACTION, ENDPOINT, EVENTS } from "#/lib/constants";
-import { pusherClient } from "#/lib/pusher-client";
+
 import clsx from "clsx";
 import { useEffect, useReducer, useState } from "react";
+
+import { ACTION, EVENTS } from "#/lib/constants";
+import { pusherClient } from "#/lib/pusher-client";
+import { registerPlayerAction } from "#/lib/action";
+import { Event } from '#/lib/event.repository';
+
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { registerPlayerAction } from "#/lib/action";
-import Pusher from "pusher-js";
-
-export type Event = Omit<DocEvent, '_id' | 'date'> & {
-  id: string;
-  date: Date;
-}
 
 interface EventManagementProps {
   event: Event;
