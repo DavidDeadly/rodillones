@@ -3,7 +3,7 @@ export const enum ACTION {
 	REMOVAL = "removal",
 }
 
-export type EVENTS = {
+export type EVENT_DATA = {
 	[ACTION.INSCRIPTION]: {
 		player: string;
 		team: string;

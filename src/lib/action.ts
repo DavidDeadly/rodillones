@@ -1,7 +1,7 @@
 "use server";
 
 import * as v from "valibot";
-import { ACTION, type EVENTS, TEAM_LIMIT } from "./constants";
+import { ACTION, type EVENT_DATA, TEAM_LIMIT } from "./constants";
 import { Event, type RegisterResult, registerPlayer } from "./event.repository";
 import { pusher } from "./pusher";
 import { sendMessage } from "./whatsapp.service";
@@ -13,7 +13,7 @@ const RegisterPlayer = v.object({
 
 export async function registerPlayerAction(
 	eventId: string,
-	registration: EVENTS[ACTION.INSCRIPTION],
+	registration: EVENT_DATA[ACTION.INSCRIPTION],
 ): Promise<RegisterResult> {
 	const data = await v.safeParseAsync(RegisterPlayer, registration);
 	const invalid = !data.success;
@@ -27,8 +27,7 @@ export async function registerPlayerAction(
 
 	let event: Event;
 	try {
-		let res = await registerPlayer(eventId, registration);
-
+		const res = await registerPlayer(eventId, registration);
 		if (res.error) return res;
 
 		event = res.data!;
@@ -93,6 +92,8 @@ Reserva
 5. Oscar Molina
 `;
 	// TODO: add extra users to the event
+	// TODO: allow player removal and take from the extra to fill the empty
+	// TODO: trace events on the application and show them on a side bar
 
 	await sendMessage(msg);
 

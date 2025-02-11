@@ -1,6 +1,6 @@
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import * as v from "valibot";
-import { ACTION, COLLECTION, EVENTS, TEAM_LIMIT } from "#/lib/constants";
+import { ACTION, COLLECTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
 import { DB, DB_PASS, DB_USER } from "#/lib/env";
 
 const uri = `mongodb+srv://${DB_USER}:${DB_PASS}@main.vqq3x.mongodb.net/?retryWrites=true&w=majority&appName=main`;
@@ -14,7 +14,7 @@ const client = new MongoClient(uri, {
 
 await client.connect();
 const rodillones = client.db(DB);
-const EVENTS = rodillones.collection<DocEvent>(COLLECTION.EVENT);
+const events = rodillones.collection<DocEvent>(COLLECTION.EVENT);
 
 type Team = string[];
 
@@ -42,7 +42,7 @@ export async function findById(id: string): Promise<Event | null> {
 	const invalidId = !validation.success;
 	if (invalidId) return null;
 
-	const docEvent = await EVENTS.findOne({
+	const docEvent = await events.findOne({
 		_id: new ObjectId(validation.output),
 	});
 	const notFound = !docEvent;
@@ -70,13 +70,13 @@ export type RegisterResult<T = unknown> =
 
 export async function registerPlayer(
 	id: string,
-	{ team, player }: EVENTS[ACTION.INSCRIPTION],
+	{ team, player }: EVENT_DATA[ACTION.INSCRIPTION],
 ): Promise<RegisterResult<Event>> {
 	const validation = await v.safeParseAsync(Base64Schema, id);
 	const invalidId = !validation.success;
 	if (invalidId) throw new Error("Not a valid id");
 
-	const docEvent = await EVENTS.findOne({
+	const docEvent = await events.findOne({
 		_id: new ObjectId(validation.output),
 	});
 
@@ -102,7 +102,7 @@ export async function registerPlayer(
 			msg: "Este jugador ya está registrado en el evento",
 		};
 
-	const updatedDoc = await EVENTS.findOneAndUpdate(
+	const updatedDoc = await events.findOneAndUpdate(
 		{ _id: new ObjectId(id) },
 		{
 			$push: {

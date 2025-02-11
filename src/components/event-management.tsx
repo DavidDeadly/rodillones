@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useEffect, useReducer, useState } from "react";
 
-import { ACTION, EVENTS, TEAM_LIMIT } from "#/lib/constants";
+import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
 import { pusherClient } from "#/lib/pusher-client";
 import { registerPlayerAction } from "#/lib/action";
 import { Event, RegisterResult } from '#/lib/event.repository';
@@ -24,10 +24,10 @@ interface EventManagementProps {
 type Action =
 |{
   type: ACTION.INSCRIPTION,
-} & EVENTS[ACTION.INSCRIPTION]
+} & EVENT_DATA[ACTION.INSCRIPTION]
 | {
   type: ACTION.REMOVAL,
-} & EVENTS[ACTION.REMOVAL]
+} & EVENT_DATA[ACTION.REMOVAL]
 
 
 function reducer(state: Event['teams'], action: Action): Event['teams'] {
@@ -58,7 +58,7 @@ export function EventManagement({ event }: EventManagementProps) {
     const channelSubscription = pusherClient.subscribe(channel);
 
     const action = ACTION.INSCRIPTION;
-    channelSubscription.bind(action, (event: EVENTS[typeof action]) => {
+    channelSubscription.bind(action, (event: EVENT_DATA[typeof action]) => {
       dispatch({ type: action, ...event });
     });
 
@@ -120,7 +120,7 @@ export function EventManagement({ event }: EventManagementProps) {
 
 type RegisterDialogProps = {
   team: string;
-  action: (registration: EVENTS[ACTION.INSCRIPTION]) => Promise<RegisterResult>
+  action: (registration: EVENT_DATA[ACTION.INSCRIPTION]) => Promise<RegisterResult>
 }
 
 export function SubmitButton() {
