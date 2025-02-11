@@ -3,6 +3,18 @@ export const enum ACTION {
 	REMOVAL = "removal",
 }
 
+export type EVENTS = {
+	[ACTION.INSCRIPTION]: {
+		player: string;
+		team: string;
+	};
+	[ACTION.REMOVAL]: {
+		player: string;
+		team: string;
+		reason: string;
+	};
+};
+
 export const enum ENDPOINT {
 	SEND_MESSAGE = "/api/send",
 }

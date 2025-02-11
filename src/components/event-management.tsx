@@ -1,9 +1,16 @@
 'use client'
 import { DocEvent } from "#/app/event/[id]/page";
-import { ACTION, ENDPOINT } from "#/lib/constants";
+import { ACTION, ENDPOINT, EVENTS } from "#/lib/constants";
 import { pusherClient } from "#/lib/pusher-client";
 import clsx from "clsx";
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Button } from "./ui/button";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import { registerPlayerAction } from "#/lib/action";
+import Pusher from "pusher-js";
 
 export type Event = Omit<DocEvent, '_id' | 'date'> & {
   id: string;
@@ -12,18 +19,6 @@ export type Event = Omit<DocEvent, '_id' | 'date'> & {
 
 interface EventManagementProps {
   event: Event;
-}
-
-type EVENTS = {
-  [ACTION.INSCRIPTION]: {
-    player: string;
-    team: string;
-  },
-  [ACTION.REMOVAL]: {
-    player: string;
-    team: string;
-    reason: string;
-  }
 }
 
 type Action =
@@ -55,7 +50,9 @@ function reducer(state: Event['teams'], action: Action): Event['teams'] {
 
 export function EventManagement({ event }: EventManagementProps) {
   const channel = event.id;
-   const [state, dispatch] = useReducer(reducer, event.teams);
+  const [state, dispatch] = useReducer(reducer, event.teams);
+
+  const register = registerPlayerAction.bind(null, channel);
 
   useEffect(() => {
     const channelSubscription = pusherClient.subscribe(channel);
@@ -65,35 +62,14 @@ export function EventManagement({ event }: EventManagementProps) {
       dispatch({ type: action, ...event });
     });
 
-    return () =>
+    return () => {
+      channelSubscription.unbind();
       channelSubscription.unsubscribe();
-  }, []);
-
-  const sendMessage = async () => {
-    const body: EVENTS[ACTION.INSCRIPTION] = {
-      player: "John Doe",
-      team: "Amarillo"
-    };
-
-    const res = await fetch(`${ENDPOINT.SEND_MESSAGE}/${channel}`, {
-      method: "POST",
-      body: JSON.stringify(body)
-    });
-
-    const failed = !res.ok;
-    if (failed) {
-      console.error(`Send messgae failed with status: ${res.status}`)
-      return;
     }
-
-    const data = await res.json();
-    console.log(data);
-  }
+  }, []);
 
   return (
     <div className="w-full my-4 flex flex-col gap-5 items-center">
-      <button onClick={sendMessage}>Send</button>
-
       <div className="w-52 border-[#9cd4bd] border-2 rounded p-4 text-center">
         <h1 className="text-xl font-bold">
           { event.address }
@@ -106,28 +82,93 @@ export function EventManagement({ event }: EventManagementProps) {
 
       {
         Object.entries(state).map(([name, team]) => (
-          <div key={name} className="w-4/5 bg-[#3E3E4D] rounded-lg p-5">
-            <h1 className="text-2xl font-bold text-center mb-2">{name}</h1>
+            <Card key={name} className="w-4/5" >
+              <CardHeader>
+                <CardTitle className="text-center">{name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2">
 
-            <div className="grid grid-cols-2 gap-2">
+                  {
+                    team.map((player, index) => {
+                      const isKeeper = index === 0;
 
-                {
-                  team.map((player, index) => {
-                    const isKeeper = index === 0;
+                      return (
+                        <div key={index} className={clsx(isKeeper && "col-span-2", "bg-[#2A2A3A] rounded py-1 px-2")}>
+                          <p className="text-center">{player}</p>
+                        </div>
 
-                    return (
-                      <div key={index} className={clsx(isKeeper && "col-span-2", "bg-[#2A2A3A] rounded py-1 px-2")}>
-                        <p className="text-center">{player}</p>
-                      </div>
-
-                    );
-                  })
-                }
-              </div>
-            </div>
+                      );
+                    })
+                  }
+                </div>
+              </CardContent>
+              <CardFooter>
+                <RegisterDialog team={name} action={register}/>
+              </CardFooter>
+            </Card>
           ))
       }
 
     </div>
+  )
+}
+
+export type RegisterResult =
+	| {
+			error: false;
+	  }
+	| {
+			error: true;
+			msg: string;
+	  };
+
+type RegisterDialogProps = {
+  team: string;
+  action: (registration: EVENTS[ACTION.INSCRIPTION]) => Promise<RegisterResult>
+}
+
+export function RegisterDialog({ team, action }: RegisterDialogProps) {
+  const [player, setPlayer] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const handleRegister = async () => {
+    const res = await action({ team, player });
+
+    if (res.error) {
+      console.error(res.msg);
+      return;
+    }
+
+    setPlayer("");
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger>
+        <Button>Registrarse</Button>
+      </DialogTrigger>
+
+        <DialogContent className="w-4/5 rounded-lg">
+          <DialogHeader>
+            <DialogTitle>Jugarás para el equipo {team}</DialogTitle>
+            <DialogDescription>
+              Una vez te registres te comprometes a <span className="font-bold">llegar a tiempo</span> al evento
+            </DialogDescription>
+          </DialogHeader>
+
+        <form action={handleRegister} className="flex gap-2">
+          <Label htmlFor="name" className="sr-only">
+            Nombre del jugador
+          </Label>
+          <Input id="link" placeholder="Jose Rueda" value={player} onChange={ev => setPlayer(ev.target.value)}/>
+
+          <Button type="submit">
+            Listo!
+          </Button>
+        </form>
+        </DialogContent>
+    </Dialog>
   )
 }
