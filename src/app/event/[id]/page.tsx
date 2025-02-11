@@ -1,5 +1,6 @@
 import { EventManagement } from '#/components/event-management';
 import { findById } from '#/lib/event.repository';
+import { getGroupParticipants } from '#/lib/whatsapp.service';
 import { notFound } from 'next/navigation';
 
 interface EventProps {

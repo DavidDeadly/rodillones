@@ -58,9 +58,10 @@ export async function findById(id: string): Promise<Event | null> {
 	return event;
 }
 
-export type RegisterResult =
+export type RegisterResult<T = unknown> =
 	| {
 			error: false;
+			data?: T;
 	  }
 	| {
 			error: true;
@@ -70,7 +71,7 @@ export type RegisterResult =
 export async function registerPlayer(
 	id: string,
 	{ team, player }: EVENTS[ACTION.INSCRIPTION],
-): Promise<RegisterResult> {
+): Promise<RegisterResult<Event>> {
 	const validation = await v.safeParseAsync(Base64Schema, id);
 	const invalidId = !validation.success;
 	if (invalidId) throw new Error("Not a valid id");
@@ -101,16 +102,33 @@ export async function registerPlayer(
 			msg: "Este jugador ya está registrado en el evento",
 		};
 
-	await EVENTS.updateOne(
+	const updatedDoc = await EVENTS.findOneAndUpdate(
 		{ _id: new ObjectId(id) },
 		{
 			$push: {
 				[`teams.${team}`]: player,
 			},
 		},
+		{
+			returnDocument: "after",
+		},
 	);
+
+	if (!updatedDoc)
+		return {
+			error: true,
+			msg: "El evento desapareció completamente!",
+		};
+
+	const { _id, date, ...rest } = updatedDoc;
+	const event = {
+		id: _id.toString(),
+		date: new Date(date),
+		...rest,
+	};
 
 	return {
 		error: false,
+		data: event,
 	};
 }

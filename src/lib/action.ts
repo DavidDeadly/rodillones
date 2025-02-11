@@ -1,9 +1,10 @@
 "use server";
 
 import * as v from "valibot";
-import { ACTION, type EVENTS } from "./constants";
-import { type RegisterResult, registerPlayer } from "./event.repository";
+import { ACTION, type EVENTS, TEAM_LIMIT } from "./constants";
+import { Event, type RegisterResult, registerPlayer } from "./event.repository";
 import { pusher } from "./pusher";
+import { sendMessage } from "./whatsapp.service";
 
 const RegisterPlayer = v.object({
 	player: v.pipe(v.string(), v.trim(), v.minLength(2)),
@@ -24,9 +25,13 @@ export async function registerPlayerAction(
 		};
 	}
 
+	let event: Event;
 	try {
-		const res = await registerPlayer(eventId, registration);
+		let res = await registerPlayer(eventId, registration);
+
 		if (res.error) return res;
+
+		event = res.data!;
 	} catch (err) {
 		const error = err as Error;
 		console.error(error.message);
@@ -38,6 +43,58 @@ export async function registerPlayerAction(
 	}
 
 	await pusher.trigger(eventId, ACTION.INSCRIPTION, data.output);
+
+	const longDate = new Intl.DateTimeFormat("es", { dateStyle: "full" }).format(
+		event.date,
+	);
+	const time12 = new Intl.DateTimeFormat("es", {
+		timeStyle: "short",
+		hour12: true,
+	}).format(event.date);
+
+	let stringTeams = "";
+
+	for (const team in event.teams) {
+		const players = Array.from(
+			{ length: TEAM_LIMIT },
+			(_, i) => event.teams[team][i] ?? "",
+		);
+
+		stringTeams += `\nEquipo Camisa ${team}\n`;
+
+		stringTeams += players
+			.map((player, index) => {
+				const isKeeper = index === 0;
+				const isLast = index === players.length - 1;
+
+				if (isKeeper) return `\n🧤. ${player}\n`;
+
+				const newLine = isLast ? "\n" : "";
+				const num = index + 1;
+				return `${num}. ${player}${newLine}`;
+			})
+			.join("\n");
+	}
+
+	const msg = `
+${longDate}
+${time12}
+${event.description}
+Dirección: ${event.address} 
+
+https://maps.app.goo.gl/ikk2aHTpGzpk16UH9
+${stringTeams}
+
+Reserva
+1. Daniel Puerta
+2. Daniel Agudelo
+3. Julián Pérez
+4. Jeison parra
+5. Oscar Molina
+`;
+	// TODO: add extra users to the event
+
+	await sendMessage(msg);
 
 	return {
 		error: false,
