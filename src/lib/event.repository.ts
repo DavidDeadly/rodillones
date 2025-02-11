@@ -1,6 +1,6 @@
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import * as v from "valibot";
-import { ACTION, COLLECTION, EVENTS } from "#/lib/constants";
+import { ACTION, COLLECTION, EVENTS, TEAM_LIMIT } from "#/lib/constants";
 import { DB, DB_PASS, DB_USER } from "#/lib/env";
 
 const uri = `mongodb+srv://${DB_USER}:${DB_PASS}@main.vqq3x.mongodb.net/?retryWrites=true&w=majority&appName=main`;
@@ -57,8 +57,6 @@ export async function findById(id: string): Promise<Event | null> {
 
 	return event;
 }
-
-const TEAM_LIMIT = 7;
 
 export type RegisterResult =
 	| {

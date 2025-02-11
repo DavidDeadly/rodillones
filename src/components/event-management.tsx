@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useEffect, useReducer, useState } from "react";
 
-import { ACTION, EVENTS } from "#/lib/constants";
+import { ACTION, EVENTS, TEAM_LIMIT } from "#/lib/constants";
 import { pusherClient } from "#/lib/pusher-client";
 import { registerPlayerAction } from "#/lib/action";
 import { Event, RegisterResult } from '#/lib/event.repository';
@@ -15,6 +15,7 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { useFormStatus } from "react-dom";
 import { Loader, UserCheck } from "lucide-react";
+import { toast } from "sonner";
 
 interface EventManagementProps {
   event: Event;
@@ -86,7 +87,7 @@ export function EventManagement({ event }: EventManagementProps) {
                 <CardTitle className="text-center">{name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-2">
 
                   {
                     team.map((player, index) => {
@@ -102,9 +103,13 @@ export function EventManagement({ event }: EventManagementProps) {
                   }
                 </div>
               </CardContent>
-              <CardFooter>
-                <RegisterDialog team={name} action={register}/>
-              </CardFooter>
+              {
+                team.length < TEAM_LIMIT && (
+                  <CardFooter>
+                    <RegisterDialog team={name} action={register}/>
+                  </CardFooter>
+                )
+              }
             </Card>
           ))
       }
@@ -132,13 +137,11 @@ export function RegisterDialog({ team, action }: RegisterDialogProps) {
   const [player, setPlayer] = useState("");
   const [open, setOpen] = useState(false);
 
-  const handleRegister = async () => {
+  const handleRegister = async (): Promise<void> => {
     const res = await action({ team, player });
 
-    if (res.error) {
-      console.error(res.msg);
-      return;
-    }
+    if (res.error)
+      return void toast.error(res.msg);
 
     setPlayer("");
     setOpen(false)

@@ -22,3 +22,5 @@ export const enum ENDPOINT {
 export const enum COLLECTION {
 	EVENT = "Events",
 }
+
+export const TEAM_LIMIT = 7;
