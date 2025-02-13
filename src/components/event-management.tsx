@@ -5,8 +5,8 @@ import { useEffect, useReducer, useState } from "react";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
 import { pusherClient } from "#/lib/pusher-client";
-import { registerPlayerAction } from "#/lib/action";
-import { Event, RegisterResult } from '#/lib/event.repository';
+import { registerPlayerAction } from "#/lib/actions/register";
+import { Event, ActionResult } from '#/lib/event.repository';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -120,7 +120,7 @@ export function EventManagement({ event }: EventManagementProps) {
 
 type RegisterDialogProps = {
   team: string;
-  action: (registration: EVENT_DATA[ACTION.INSCRIPTION]) => Promise<RegisterResult>
+  action: (registration: EVENT_DATA[ACTION.INSCRIPTION]) => Promise<ActionResult>
 }
 
 export function SubmitButton() {

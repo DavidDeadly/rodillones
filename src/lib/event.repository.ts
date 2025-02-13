@@ -58,7 +58,7 @@ export async function findById(id: string): Promise<Event | null> {
 	return event;
 }
 
-export type RegisterResult<T = unknown> =
+export type ActionResult<T = unknown> =
 	| {
 			error: false;
 			data?: T;
@@ -71,7 +71,7 @@ export type RegisterResult<T = unknown> =
 export async function registerPlayer(
 	id: string,
 	{ team, player }: EVENT_DATA[ACTION.INSCRIPTION],
-): Promise<RegisterResult<Event>> {
+): Promise<ActionResult<Event>> {
 	const validation = await v.safeParseAsync(Base64Schema, id);
 	const invalidId = !validation.success;
 	if (invalidId) throw new Error("Not a valid id");
