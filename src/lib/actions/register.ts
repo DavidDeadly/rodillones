@@ -1,21 +1,21 @@
 "use server";
 
-import * as v from "valibot";
+import { z } from "zod";
 import { ACTION, type EVENT_DATA, TEAM_LIMIT } from "../constants";
 import { type ActionResult, Event, registerPlayer } from "../event.repository";
 import { pusher } from "../pusher";
 import { sendMessage } from "../whatsapp.service";
 
-const RegisterPlayer = v.object({
-	player: v.pipe(v.string(), v.trim(), v.minLength(2)),
-	team: v.string(),
+const RegisterPlayerSchema = z.object({
+	team: z.string(),
+	player: z.string().trim().min(2),
 });
 
 export async function registerPlayerAction(
 	eventId: string,
 	registration: EVENT_DATA[ACTION.INSCRIPTION],
 ): Promise<ActionResult> {
-	const data = await v.safeParseAsync(RegisterPlayer, registration);
+	const data = await RegisterPlayerSchema.safeParseAsync(registration);
 	const invalid = !data.success;
 
 	if (invalid) {
@@ -41,7 +41,7 @@ export async function registerPlayerAction(
 		};
 	}
 
-	await pusher.trigger(eventId, ACTION.INSCRIPTION, data.output);
+	await pusher.trigger(eventId, ACTION.INSCRIPTION, data.data);
 
 	const longDate = new Intl.DateTimeFormat("es", { dateStyle: "full" }).format(
 		event.date,

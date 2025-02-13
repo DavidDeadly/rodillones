@@ -1,5 +1,6 @@
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
-import * as v from "valibot";
+import { z } from "zod";
+
 import { ACTION, COLLECTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
 import { DB, DB_PASS, DB_USER } from "#/lib/env";
 
@@ -31,19 +32,18 @@ export type Event = Omit<DocEvent, "_id" | "date"> & {
 	date: Date;
 };
 
-const Base64Schema = v.pipe(
-	v.string(),
-	v.minLength(24, "ID must be 24 characters long."),
-	v.base64("The data is badly encoded."),
-);
+const Base64Schema = z
+	.string()
+	.min(24, "ID must be 24 characters long.")
+	.base64("The data is badly encoded.");
 
 export async function findById(id: string): Promise<Event | null> {
-	const validation = await v.safeParseAsync(Base64Schema, id);
+	const validation = await Base64Schema.safeParseAsync(id);
 	const invalidId = !validation.success;
 	if (invalidId) return null;
 
 	const docEvent = await events.findOne({
-		_id: new ObjectId(validation.output),
+		_id: new ObjectId(validation.data),
 	});
 	const notFound = !docEvent;
 	if (notFound) return null;
@@ -72,12 +72,12 @@ export async function registerPlayer(
 	id: string,
 	{ team, player }: EVENT_DATA[ACTION.INSCRIPTION],
 ): Promise<ActionResult<Event>> {
-	const validation = await v.safeParseAsync(Base64Schema, id);
+	const validation = await Base64Schema.safeParseAsync(id);
 	const invalidId = !validation.success;
 	if (invalidId) throw new Error("Not a valid id");
 
 	const docEvent = await events.findOne({
-		_id: new ObjectId(validation.output),
+		_id: new ObjectId(validation.data),
 	});
 
 	const notFound = !docEvent;
