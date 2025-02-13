@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { ActionResult } from "../event.repository";
 import { createClient } from "../supabase/server";
+import { getGroupParticipants } from "../whatsapp.service";
 
 export async function loginPasslessPhone(
 	prev: ActionResult<string>,
@@ -49,6 +50,9 @@ async function requestOtp(number: string): Promise<ActionResult<string>> {
 
 	const phone = `57${validation.data}`;
 
+	const participationError = await validateParticipant(phone);
+	if (participationError) return participationError;
+
 	const supabase = await createClient();
 	const { error } = await supabase.auth.signInWithOtp({ phone });
 
@@ -83,4 +87,29 @@ async function verifyOtp(
 		};
 
 	redirect("/event/67a91921d729657addde107a");
+}
+
+async function validateParticipant(
+	phone: string,
+): Promise<ActionResult<string> | null> {
+	try {
+		const participants = await getGroupParticipants();
+
+		const isParticipant = participants.includes(phone);
+
+		if (isParticipant) return null;
+	} catch (err) {
+		const error = err as Error;
+		console.error(`Participation Error: ${error.message}`);
+
+		return {
+			error: true,
+			msg: "Hubo un error validando su pertenencia al grupo",
+		};
+	}
+
+	return {
+		error: true,
+		msg: "No haces parte del grupo RODILLONES",
+	};
 }

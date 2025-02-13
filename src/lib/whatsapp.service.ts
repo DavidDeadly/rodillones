@@ -2,8 +2,8 @@ import { MAYTAPI_API_TOKEN, MAYTAPI_PHONE_ID, MAYTAPI_PRODUCT_ID } from "./env";
 
 const MAYTAPI_URL = `https://api.maytapi.com/api/${MAYTAPI_PRODUCT_ID}/${MAYTAPI_PHONE_ID}`;
 const MAYTAPI_HEADER = "x-maytapi-key";
-// const GROUP_ID = "120363382062731337@g.us";
-const GROUP_ID = "573506925825@c.us";
+const GROUP_ID = "120363382062731337@g.us";
+// const GROUP_ID = "573506925825@c.us";
 const headers = {
 	[MAYTAPI_HEADER]: MAYTAPI_API_TOKEN,
 } as Record<string, string>;
