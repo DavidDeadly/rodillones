@@ -1,8 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { SESSION_COOKIE } from "../constants";
 import { ActionResult } from "../event.repository";
 import { createClient } from "../supabase/server";
 
