@@ -36,7 +36,7 @@ function ToTPInput({ pending, formRef }: {
         maxLength={4}
         disabled={pending}
         pattern={REGEXP_ONLY_DIGITS}
-        onComplete={() => formRef?.current.requestSubmit()}
+        onComplete={() => formRef?.current?.requestSubmit()}
       >
         <InputOTPGroup>
           <InputOTPSlot index={0} />
