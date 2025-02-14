@@ -93,7 +93,7 @@ function TeamCard({ team, players, register, isExtra, userId }: TeamCardProps) {
 
   return (
     <Card className={clsx(
-      "grid grid-rows-[auto_1fr_auto]",
+      "grid w-72 grid-rows-[auto_1fr_auto]",
       {
         "border-primary border-2": isPlayableTeam,
       }
@@ -137,7 +137,7 @@ export function EventManagement({ event, userId }: EventManagementProps) {
   return (
     <div className="w-full flex flex-col gap-5 items-center">
 
-      <div className="w-4/5 md:w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="w-4/5 md:w-full flex flex-wrap justify-center gap-4 mb-6">
         {
           Object.entries(state).map(([name, team]) => 
             <TeamCard key={name} team={name} players={team} register={register} userId={userId} isExtra={name === event.extraTeam}/>
