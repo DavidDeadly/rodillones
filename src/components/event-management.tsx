@@ -1,15 +1,15 @@
 'use client'
 
 import clsx from "clsx";
-import { use, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Loader, UserCheck } from "lucide-react";
+import { Calendar, CircleX, Clock, Loader, MapPin, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
 import { pusherClient } from "#/lib/pusher-client";
 import { PlayerRegistration, registerPlayerAction } from "#/lib/actions/register";
-import { Event, ActionResult } from '#/lib/event.repository';
+import { Event, ActionResult, Player } from '#/lib/event.repository';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -48,15 +48,73 @@ function reducer(state: Event['teams'], action: Action): Event['teams'] {
   throw Error('Unknown action: ' + action.type);
 }
 
+function PlayerCard({ player, isKeeper }: { player: Player, isKeeper: boolean }) {
+  const user = useUser();
+  const registerByMe = player.registerBy === user?.id;
+
+  const handleDiregister = useCallback(() => {
+    if (!registerByMe) return;
+
+    console.log(`Deregistering player ${player.name}`);
+  },
+    []);
+
+  return (
+    <button className={clsx(
+      "col-span-2 rounded bg-secondary py-1 px-2 flex justify-center relative group",
+      {
+        "hover:bg-destructive transition-colors cursor-pointer": registerByMe,
+        "pointer-events-none": !registerByMe
+      }
+    )}
+      onClick={handleDiregister}
+    >
+      <span>{player.name}</span>
+
+      {
+        registerByMe && (
+          <CircleX size={18} className="text-destructive absolute -right-2 -top-2 group-hover:invisible transition-opacity"/>
+        )
+      }
+    </button>
+  )
+}
+
+function TeamCard({ team, players, register }: { team: string, players: Event['teams'][string], register: (registration: PlayerRegistration) => Promise<ActionResult> }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold text-center">{team}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-2">
+          {
+            players.map((player, index) =>
+                <PlayerCard key={player.name} player={player} isKeeper={index === 0} />
+            )
+          }
+        </div>
+      </CardContent>
+
+      <CardFooter>
+        {
+          players.length < TEAM_LIMIT && (
+            <CardFooter>
+              <RegisterDialog team={team} action={register}/>
+            </CardFooter>
+          )
+        }
+      </CardFooter>
+    </Card>
+  )
+}
 
 export function EventManagement({ event }: EventManagementProps) {
   const channel = event.id;
   const [state, dispatch] = useReducer(reducer, event.teams);
-  const user = useUser();
-
-  console.log({ client: user });
 
   const register = registerPlayerAction.bind(null, channel);
+
 
   useEffect(() => {
     const channelSubscription = pusherClient.subscribe(channel);
@@ -74,57 +132,37 @@ export function EventManagement({ event }: EventManagementProps) {
 
   return (
     <div className="w-full my-4 flex flex-col gap-5 items-center">
-      <div className="w-52 border-primary border-2 rounded p-4 text-center">
-        <h1 className="text-xl font-bold">
-          { event.address }
-        </h1>
+      <Card>
+        <CardHeader>
+          <h1 className="text-2xl font-bold">{event.description}</h1>
+        </CardHeader>
 
-        <p>{event.description}</p>
+        <CardContent className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <Calendar className="text-secondary-foreground" />
+            <span>{event.date.toLocaleDateString()}</span>
+          </div>
 
-        <p>{event.date.toLocaleDateString()} - {event.date.toLocaleTimeString()}</p>
+          <div className="flex items-center gap-2">
+            <Clock className="text-secondary-foreground" />
+            <span>{event.date.toLocaleTimeString()}</span>
+          </div>
+
+          <a href="https://maps.google.com" className="underline flex items-center gap-2">
+            <MapPin className="text-secondary-foreground" />
+            <span>{event.address}</span>
+          </a>
+        </CardContent>
+
+      </Card>
+
+      <div className="w-4/5 md:w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {
+          Object.entries(state).map(([name, team]) => 
+            <TeamCard key={name} team={name} players={team} register={register}/>
+          )
+        }
       </div>
-
-      {
-        Object.entries(state).map(([name, team]) => (
-            <Card key={name} className="w-4/5" >
-              <CardHeader>
-                <CardTitle className="text-center">{name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col gap-2">
-
-                  {
-                    team.map((player, index) => {
-                      const isKeeper = index === 0;
-                      const registerByMe = player.registerBy === user?.id;
-
-                      return (
-                        <div key={index} className={clsx(
-                          "col-span-2", "bg-secondary rounded py-1 px-2",
-                          {
-                            "col-span-2": isKeeper,
-                            "bg-primary":  registerByMe
-                          }
-                        )}>
-                          <p className="text-center">{player.name}</p>
-                        </div>
-
-                      );
-                    })
-                  }
-                </div>
-              </CardContent>
-              {
-                team.length < TEAM_LIMIT && (
-                  <CardFooter>
-                    <RegisterDialog team={name} action={register}/>
-                  </CardFooter>
-                )
-              }
-            </Card>
-          ))
-      }
-
     </div>
   )
 }
