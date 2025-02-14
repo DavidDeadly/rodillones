@@ -17,7 +17,12 @@ await client.connect();
 const rodillones = client.db(DB);
 const events = rodillones.collection<DocEvent>(COLLECTION.EVENT);
 
-type Team = string[];
+export type Player = {
+	name: string;
+	registerBy: string;
+};
+
+export type Team = Player[];
 
 interface DocEvent {
 	_id: ObjectId;
@@ -96,7 +101,10 @@ export async function registerPlayer(
 			msg: "Al parecer el equipo ya está completo",
 		};
 
-	if (allPlayers.includes(player))
+	const alreadyRegistered = allPlayers.find(
+		(p) => p.name.toLowerCase() === player.name.toLowerCase(),
+	);
+	if (alreadyRegistered)
 		return {
 			error: true,
 			msg: "Este jugador ya está registrado en el evento",

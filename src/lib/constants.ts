@@ -1,3 +1,5 @@
+import { Player } from "./event.repository";
+
 export const enum ACTION {
 	INSCRIPTION = "inscription",
 	REMOVAL = "removal",
@@ -5,8 +7,8 @@ export const enum ACTION {
 
 export type EVENT_DATA = {
 	[ACTION.INSCRIPTION]: {
-		player: string;
 		team: string;
+		player: Player;
 	};
 	[ACTION.REMOVAL]: {
 		player: string;

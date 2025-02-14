@@ -2,10 +2,13 @@
 
 import clsx from "clsx";
 import { useEffect, useReducer, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { Loader, UserCheck } from "lucide-react";
+import { toast } from "sonner";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
 import { pusherClient } from "#/lib/pusher-client";
-import { registerPlayerAction } from "#/lib/actions/register";
+import { PlayerRegistration, registerPlayerAction } from "#/lib/actions/register";
 import { Event, ActionResult } from '#/lib/event.repository';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
@@ -13,9 +16,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { useFormStatus } from "react-dom";
-import { Loader, UserCheck } from "lucide-react";
-import { toast } from "sonner";
 
 interface EventManagementProps {
   event: Event;
@@ -28,7 +28,6 @@ type Action =
 | {
   type: ACTION.REMOVAL,
 } & EVENT_DATA[ACTION.REMOVAL]
-
 
 function reducer(state: Event['teams'], action: Action): Event['teams'] {
   switch (action.type) {
@@ -95,7 +94,7 @@ export function EventManagement({ event }: EventManagementProps) {
 
                       return (
                         <div key={index} className={clsx(isKeeper && "col-span-2", "bg-[#2A2A3A] rounded py-1 px-2")}>
-                          <p className="text-center">{player}</p>
+                          <p className="text-center">{player.name}</p>
                         </div>
 
                       );
@@ -120,7 +119,7 @@ export function EventManagement({ event }: EventManagementProps) {
 
 type RegisterDialogProps = {
   team: string;
-  action: (registration: EVENT_DATA[ACTION.INSCRIPTION]) => Promise<ActionResult>
+  action: (registration: PlayerRegistration) => Promise<ActionResult>
 }
 
 export function SubmitButton() {
@@ -134,11 +133,11 @@ export function SubmitButton() {
 }
 
 export function RegisterDialog({ team, action }: RegisterDialogProps) {
-  const [player, setPlayer] = useState("");
+  const [playerName, setPlayer] = useState("");
   const [open, setOpen] = useState(false);
 
   const handleRegister = async (): Promise<void> => {
-    const res = await action({ team, player });
+    const res = await action({ team, playerName });
 
     if (res.error)
       return void toast.error(res.msg);
@@ -165,7 +164,7 @@ export function RegisterDialog({ team, action }: RegisterDialogProps) {
           <Label htmlFor="name" className="sr-only">
             Nombre del jugador
           </Label>
-          <Input id="link" placeholder="Jose Rueda" value={player} onChange={ev => setPlayer(ev.target.value)}/>
+          <Input id="link" placeholder="Jose Rueda" value={playerName} onChange={ev => setPlayer(ev.target.value)}/>
 
           <SubmitButton />
         </form>

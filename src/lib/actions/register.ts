@@ -1,22 +1,39 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ACTION, type EVENT_DATA, TEAM_LIMIT } from "../constants";
-import { type ActionResult, Event, registerPlayer } from "../event.repository";
+import {
+	type ActionResult,
+	Event,
+	Player,
+	registerPlayer,
+} from "../event.repository";
 import { pusher } from "../pusher";
+import { createClient } from "../supabase/server";
 import { sendMessage } from "../whatsapp.service";
 
-const RegisterPlayerSchema = z.object({
+const PlayerRegistrationSchema = z.object({
 	team: z.string(),
-	player: z.string().trim().min(2),
+	playerName: z.string().trim().min(2),
 });
+
+export type PlayerRegistration = z.infer<typeof PlayerRegistrationSchema>;
 
 export async function registerPlayerAction(
 	eventId: string,
-	registration: EVENT_DATA[ACTION.INSCRIPTION],
+	registration: PlayerRegistration,
 ): Promise<ActionResult> {
-	const data = await RegisterPlayerSchema.safeParseAsync(registration);
-	const invalid = !data.success;
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) redirect("/login");
+
+	const validation =
+		await PlayerRegistrationSchema.safeParseAsync(registration);
+	const invalid = !validation.success;
 
 	if (invalid) {
 		return {
@@ -25,9 +42,18 @@ export async function registerPlayerAction(
 		};
 	}
 
+	const { playerName, team } = validation.data;
+
+	const player: Player = {
+		name: playerName,
+		registerBy: user.id,
+	};
+
+	const registrationEvent = { player, team };
+
 	let event: Event;
 	try {
-		const res = await registerPlayer(eventId, registration);
+		const res = await registerPlayer(eventId, registrationEvent);
 		if (res.error) return res;
 
 		event = res.data!;
@@ -41,7 +67,7 @@ export async function registerPlayerAction(
 		};
 	}
 
-	await pusher.trigger(eventId, ACTION.INSCRIPTION, data.data);
+	await pusher.trigger(eventId, ACTION.INSCRIPTION, registrationEvent);
 
 	const longDate = new Intl.DateTimeFormat("es", { dateStyle: "full" }).format(
 		event.date,
@@ -56,7 +82,7 @@ export async function registerPlayerAction(
 	for (const team in event.teams) {
 		const players = Array.from(
 			{ length: TEAM_LIMIT },
-			(_, i) => event.teams[team][i] ?? "",
+			(_, i) => event.teams[team][i] ?? {},
 		);
 
 		stringTeams += `\nEquipo Camisa ${team}\n`;
@@ -66,11 +92,14 @@ export async function registerPlayerAction(
 				const isKeeper = index === 0;
 				const isLast = index === players.length - 1;
 
-				if (isKeeper) return `\n🧤. ${player}\n`;
+				const { name = "" } = player;
+
+				if (isKeeper) return `\n🧤. ${name}\n`;
 
 				const newLine = isLast ? "\n" : "";
 				const num = index + 1;
-				return `${num}. ${player}${newLine}`;
+
+				return `${num}. ${name}${newLine}`;
 			})
 			.join("\n");
 	}
