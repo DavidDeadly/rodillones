@@ -20,6 +20,7 @@ import { useUser } from "#/lib/supabase/get-user-client";
 
 interface EventManagementProps {
   event: Event;
+  userId: string;
 }
 
 type Action =
@@ -48,16 +49,16 @@ function reducer(state: Event['teams'], action: Action): Event['teams'] {
   throw Error('Unknown action: ' + action.type);
 }
 
-function PlayerCard({ player, isKeeper }: { player: Player, isKeeper: boolean }) {
-  const user = useUser();
-  const registerByMe = player.registerBy === user?.id;
+interface PlayerCardProps { player: Player, isKeeper: boolean, userId: string };
+
+function PlayerCard({ player, userId, isKeeper }: PlayerCardProps) {
+  const registerByMe = player.registerBy === userId;
 
   const handleDiregister = useCallback(() => {
     if (!registerByMe) return;
 
     console.log(`Deregistering player ${player.name}`);
-  },
-    []);
+  }, []);
 
   return (
     <button className={clsx(
@@ -84,10 +85,11 @@ export interface TeamCardProps {
   team: string,
   players: Event['teams'][string],
   isExtra: boolean,
+  userId: string,
   register: (registration: PlayerRegistration) => Promise<ActionResult>
 }
 
-function TeamCard({ team, players, register, isExtra }: TeamCardProps) {
+function TeamCard({ team, players, register, isExtra, userId }: TeamCardProps) {
   const isPlayableTeam = !isExtra;
 
   return (
@@ -102,7 +104,7 @@ function TeamCard({ team, players, register, isExtra }: TeamCardProps) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-2">
-          {players.map((player, index) => <PlayerCard key={player.name} player={player} isKeeper={index === 0} />)}
+          {players.map((player, index) => <PlayerCard key={player.name} player={player} userId={userId} isKeeper={index === 0} />)}
         </div>
       </CardContent>
 
@@ -113,7 +115,7 @@ function TeamCard({ team, players, register, isExtra }: TeamCardProps) {
   )
 }
 
-export function EventManagement({ event }: EventManagementProps) {
+export function EventManagement({ event, userId }: EventManagementProps) {
   const channel = event.id;
   const [state, dispatch] = useReducer(reducer, event.teams);
 
@@ -139,7 +141,7 @@ export function EventManagement({ event }: EventManagementProps) {
       <div className="w-4/5 md:w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {
           Object.entries(state).map(([name, team]) => 
-            <TeamCard key={name} team={name} players={team} register={register} isExtra={name === event.extraTeam}/>
+            <TeamCard key={name} team={name} players={team} register={register} userId={userId} isExtra={name === event.extraTeam}/>
           )
         }
       </div>

@@ -11,8 +11,8 @@ export function useUser(): User | null {
 
 	useEffect(() => {
 		supabase.auth
-			.getUser()
-			.then(({ data }) => setUser(data.user))
+			.getSession()
+			.then((session) => setUser(session.data.session?.user ?? null))
 			.catch((err) => {
 				console.error(err.message);
 				setUser(null);

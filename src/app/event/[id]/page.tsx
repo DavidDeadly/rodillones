@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import { EventManagement } from '#/components/event-management';
 import { findById } from '#/lib/event.repository';
@@ -13,7 +13,7 @@ interface EventProps {
 export default async function Event({ params }: EventProps) {
   const user = await getServerUser();
 
-  console.log({ user })
+  if (!user) redirect("/login");
 
   const { id } = await params;
 
@@ -44,7 +44,7 @@ export default async function Event({ params }: EventProps) {
         </section>
       </header>
 
-      <EventManagement event={event}/>
+      <EventManagement event={event} userId={user.id}/>
     </>
   )
 }
