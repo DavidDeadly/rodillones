@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Calendar, CircleX, Clock, Loader, MapPin, UserCheck } from "lucide-react";
+import { Calendar, CircleCheckBig, CircleX, Clock, Loader, MapPin, UserCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
@@ -98,11 +98,8 @@ function TeamCard({ team, players, register }: { team: string, players: Event['t
 
       <CardFooter>
         {
-          players.length < TEAM_LIMIT && (
-            <CardFooter>
-              <RegisterDialog team={team} action={register}/>
-            </CardFooter>
-          )
+          
+              <RegisterDialog team={team} players={players} action={register}/>
         }
       </CardFooter>
     </Card>
@@ -114,7 +111,6 @@ export function EventManagement({ event }: EventManagementProps) {
   const [state, dispatch] = useReducer(reducer, event.teams);
 
   const register = registerPlayerAction.bind(null, channel);
-
 
   useEffect(() => {
     const channelSubscription = pusherClient.subscribe(channel);
@@ -169,6 +165,7 @@ export function EventManagement({ event }: EventManagementProps) {
 
 type RegisterDialogProps = {
   team: string;
+  players: Player[];
   action: (registration: PlayerRegistration) => Promise<ActionResult>
 }
 
@@ -182,9 +179,10 @@ export function SubmitButton() {
   )
 }
 
-export function RegisterDialog({ team, action }: RegisterDialogProps) {
+export function RegisterDialog({ team, players, action }: RegisterDialogProps) {
   const [playerName, setPlayer] = useState("");
   const [open, setOpen] = useState(false);
+  const teamFull = players.length >= TEAM_LIMIT;
 
   const handleRegister = async (): Promise<void> => {
     const res = await action({ team, playerName });
@@ -198,8 +196,18 @@ export function RegisterDialog({ team, action }: RegisterDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button>Registrarse</Button>
+      <DialogTrigger asChild disabled={teamFull}>
+        <Button variant="outline" className={clsx(
+          "w-full",
+          {
+          "bg-primary": !teamFull,
+          "bg-green-600": teamFull
+          }
+        )}>
+          {teamFull ? <CircleCheckBig /> : <UserPlus />}
+
+          {teamFull ? "Equipo completo" : `Añadir jugador (faltan ${TEAM_LIMIT - players.length})`}
+        </Button>
       </DialogTrigger>
 
         <DialogContent className="w-4/5 rounded-lg">
