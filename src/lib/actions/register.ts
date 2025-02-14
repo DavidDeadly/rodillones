@@ -76,21 +76,25 @@ export async function registerPlayerAction(
 	let stringTeams = "";
 
 	for (const team in event.teams) {
+		const isPlayable = event.extraTeam !== team;
+		const length = isPlayable ? TEAM_LIMIT : event.teams[team].length;
+
 		const players = Array.from(
-			{ length: TEAM_LIMIT },
+			{ length },
 			(_, i) => event.teams[team][i] ?? {},
 		);
 
-		stringTeams += `\nEquipo Camisa ${team}\n`;
+		const teamPrefix = isPlayable ? "Equipo Camisa " : "";
+		stringTeams += `\n${teamPrefix}${team}\n\n`;
 
 		stringTeams += players
 			.map((player, index) => {
-				const isKeeper = index === 0;
+				const isKeeper = isPlayable && index === 0;
 				const isLast = index === players.length - 1;
 
 				const { name = "" } = player;
 
-				if (isKeeper) return `\n🧤. ${name}\n`;
+				if (isKeeper) return `🧤. ${name}\n`;
 
 				const newLine = isLast ? "\n" : "";
 				const num = index + 1;
@@ -108,15 +112,8 @@ Dirección: ${event.address}
 
 https://maps.app.goo.gl/ikk2aHTpGzpk16UH9
 ${stringTeams}
-
-Reserva
-1. Daniel Puerta
-2. Daniel Agudelo
-3. Julián Pérez
-4. Jeison parra
-5. Oscar Molina
 `;
-	// TODO: add extra users to the event
+	// TODO: remove limits on extra team
 	// TODO: allow player removal and take from the extra to fill the empty
 	// TODO: trace events on the application and show them on a side bar
 
