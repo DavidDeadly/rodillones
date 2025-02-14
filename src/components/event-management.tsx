@@ -74,7 +74,7 @@ export function EventManagement({ event }: EventManagementProps) {
 
   return (
     <div className="w-full my-4 flex flex-col gap-5 items-center">
-      <div className="w-52 border-[#9cd4bd] border-2 rounded p-4 text-center">
+      <div className="w-52 border-primary border-2 rounded p-4 text-center">
         <h1 className="text-xl font-bold">
           { event.address }
         </h1>
@@ -100,7 +100,7 @@ export function EventManagement({ event }: EventManagementProps) {
 
                       return (
                         <div key={index} className={clsx(
-                          "col-span-2", "bg-[#2A2A3A] rounded py-1 px-2",
+                          "col-span-2", "bg-secondary rounded py-1 px-2",
                           {
                             "col-span-2": isKeeper,
                             "bg-primary":  registerByMe
