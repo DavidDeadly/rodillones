@@ -38,8 +38,8 @@ export default async function Event({ params }: EventProps) {
             {longDate} - {time12}
           </span>
 
-          <a href="https://maps.google.com" className="underline">
-            <span>{event.address}</span>
+          <a href={event.address.url} className="underline">
+            <span>{event.address.text}</span>
           </a>
         </section>
       </header>

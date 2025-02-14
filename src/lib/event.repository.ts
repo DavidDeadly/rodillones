@@ -24,10 +24,15 @@ export type Player = {
 
 export type Team = Player[];
 
+export type Address = {
+	text: string;
+	url: string;
+};
+
 interface DocEvent {
 	_id: ObjectId;
 	date: string;
-	address: string;
+	address: Address;
 	description: string;
 	teams: Record<string, Team>;
 	extraTeam: string;

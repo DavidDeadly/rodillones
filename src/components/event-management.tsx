@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Calendar, CircleCheckBig, CircleX, Clock, Loader, MapPin, UserCheck, UserPlus } from "lucide-react";
+import { CircleCheckBig, CircleX, Loader, UserCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";

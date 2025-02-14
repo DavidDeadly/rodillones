@@ -108,9 +108,9 @@ export async function registerPlayerAction(
 ${longDate}
 ${time12}
 ${event.description}
-Dirección: ${event.address} 
+Dirección: ${event.address.text} 
 
-https://maps.app.goo.gl/ikk2aHTpGzpk16UH9
+${event.address.url}
 ${stringTeams}
 `;
 	// TODO: allow player removal
