@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { ACTION, type EVENT_DATA, TEAM_LIMIT } from "../constants";
+import { ACTION, TEAM_LIMIT } from "../constants";
 import {
 	type ActionResult,
 	Event,

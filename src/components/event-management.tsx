@@ -16,7 +16,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { useUser } from "#/lib/supabase/get-user-client";
 
 interface EventManagementProps {
   event: Event;
@@ -51,7 +50,7 @@ function reducer(state: Event['teams'], action: Action): Event['teams'] {
 
 interface PlayerCardProps { player: Player, isKeeper: boolean, userId: string };
 
-function PlayerCard({ player, userId, isKeeper }: PlayerCardProps) {
+function PlayerCard({ player, userId }: PlayerCardProps) {
   const registerByMe = player.registerBy === userId;
 
   const handleDiregister = useCallback(() => {
