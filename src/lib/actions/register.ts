@@ -11,6 +11,7 @@ import {
 } from "../event.repository";
 import { pusher } from "../pusher";
 import { supabaseServer } from "../supabase/server";
+import { formatDate } from "../time";
 import { sendMessage } from "../whatsapp.service";
 
 const PlayerRegistrationSchema = z.object({
@@ -69,13 +70,8 @@ export async function registerPlayerAction(
 
 	await pusher.trigger(eventId, ACTION.INSCRIPTION, registrationEvent);
 
-	const longDate = new Intl.DateTimeFormat("es", { dateStyle: "full" }).format(
-		event.date,
-	);
-	const time12 = new Intl.DateTimeFormat("es", {
-		timeStyle: "short",
-		hour12: true,
-	}).format(event.date);
+	const longDate = formatDate(event.date, { dateStyle: "full" });
+	const time12 = formatDate(event.date, { timeStyle: "short", hour12: true });
 
 	let stringTeams = "";
 

@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { EventManagement } from '#/components/event-management';
 import { findById } from '#/lib/event.repository';
 import { getServerUser } from '#/lib/supabase/get-user-server';
+import clsx from 'clsx';
+import { formatDate } from '#/lib/time';
 
 interface EventProps {
   params: Promise<{ id: string }>
@@ -20,5 +22,29 @@ export default async function Event({ params }: EventProps) {
   const noEvent = !event;
   if (noEvent) return notFound();
 
-  return <EventManagement event={event}/>
+  const longDate = formatDate(event.date, { dateStyle: "full" });
+  const time12 = formatDate(event.date, { timeStyle: "short", hour12: true });
+
+  return (
+    <>
+      <header className={clsx([
+        "w-full p-4 mb-4 text-center rounded-none border-dashed border-0 border-b",
+        "sticky z-50 top-0 bg-background/95 backdrop-blur-0 supports-[backdrop-filter]:bg-background/60"
+      ])}>
+        <h1 className="my-2 text-lg font-bold">{event.description}</h1>
+
+        <section className="flex flex-col gap-2 text-center text-xs">
+          <span>
+            {longDate} - {time12}
+          </span>
+
+          <a href="https://maps.google.com" className="underline">
+            <span>{event.address}</span>
+          </a>
+        </section>
+      </header>
+
+      <EventManagement event={event}/>
+    </>
+  )
 }

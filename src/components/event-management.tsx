@@ -134,30 +134,7 @@ export function EventManagement({ event }: EventManagementProps) {
   }, []);
 
   return (
-    <div className="w-full my-4 flex flex-col gap-5 items-center">
-      <Card>
-        <CardHeader>
-          <h1 className="text-2xl font-bold">{event.description}</h1>
-        </CardHeader>
-
-        <CardContent className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <Calendar className="text-secondary-foreground" />
-            <span>{event.date.toLocaleDateString()}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Clock className="text-secondary-foreground" />
-            <span>{event.date.toLocaleTimeString()}</span>
-          </div>
-
-          <a href="https://maps.google.com" className="underline flex items-center gap-2">
-            <MapPin className="text-secondary-foreground" />
-            <span>{event.address}</span>
-          </a>
-        </CardContent>
-
-      </Card>
+    <div className="w-full flex flex-col gap-5 items-center">
 
       <div className="w-4/5 md:w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {

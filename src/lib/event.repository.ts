@@ -30,6 +30,7 @@ interface DocEvent {
 	address: string;
 	description: string;
 	teams: Record<string, Team>;
+	extraTeam: string;
 }
 
 export type Event = Omit<DocEvent, "_id" | "date"> & {
