@@ -82,9 +82,9 @@ function PlayerCard({ player, isKeeper }: { player: Player, isKeeper: boolean })
 
 function TeamCard({ team, players, register }: { team: string, players: Event['teams'][string], register: (registration: PlayerRegistration) => Promise<ActionResult> }) {
   return (
-    <Card>
+    <Card className="grid grid-rows-[auto_1fr_auto]">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-center">{team}</CardTitle>
+        <CardTitle className="text-2xl font-semibold text-center">{team}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-2">
@@ -97,10 +97,7 @@ function TeamCard({ team, players, register }: { team: string, players: Event['t
       </CardContent>
 
       <CardFooter>
-        {
-          
-              <RegisterDialog team={team} players={players} action={register}/>
-        }
+        <RegisterDialog team={team} players={players} action={register}/>
       </CardFooter>
     </Card>
   )
