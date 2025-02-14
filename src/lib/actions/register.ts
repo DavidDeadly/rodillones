@@ -113,7 +113,6 @@ Dirección: ${event.address.text}
 ${event.address.url}
 ${stringTeams}
 `;
-	// TODO: allow player removal
 	// TODO: trace events on the application and show them on a side bar
 
 	await sendMessage(msg);

@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { CircleCheckBig, CircleX, Loader, UserCheck, UserPlus } from "lucide-react";
+import { CircleCheckBig, CircleX, Delete, Loader, LogOut, UserCheck, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
+import { cancelRegistration } from "#/lib/actions/cancel";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 
 interface EventManagementProps {
   event: Event;
@@ -48,35 +50,23 @@ function reducer(state: Event['teams'], action: Action): Event['teams'] {
   throw Error('Unknown action: ' + action.type);
 }
 
-interface PlayerCardProps { player: Player, isKeeper: boolean, userId: string };
+interface PlayerCardProps {
+  team: string,
+  player: Player,
+  isKeeper: boolean,
+  userId: string
+  action: (registration: PlayerRegistration) => Promise<ActionResult>
+};
 
-function PlayerCard({ player, userId }: PlayerCardProps) {
+function PlayerCard({ team, player, userId, action }: PlayerCardProps) {
   const registerByMe = player.registerBy === userId;
 
-  const handleDiregister = useCallback(() => {
-    if (!registerByMe) return;
-
-    console.log(`Deregistering player ${player.name}`);
-  }, []);
-
   return (
-    <button className={clsx(
-      "col-span-2 rounded bg-secondary py-1 px-2 flex justify-center relative group",
-      {
-        "hover:bg-destructive transition-colors cursor-pointer": registerByMe,
-        "pointer-events-none": !registerByMe
-      }
-    )}
-      onClick={handleDiregister}
-    >
-      <span>{player.name}</span>
+    <article className="flex items-center justify-around rounded bg-secondary h-10 pl-2">
+      <span className="inline-block flex-1">{player.name}</span>
 
-      {
-        registerByMe && (
-          <CircleX size={18} className="text-destructive absolute -right-2 -top-2 group-hover:invisible transition-opacity"/>
-        )
-      }
-    </button>
+      {registerByMe && <CancelDialog team={team} playerName={player.name} action={action} />}
+    </article>
   )
 }
 
@@ -86,9 +76,10 @@ export interface TeamCardProps {
   isExtra: boolean,
   userId: string,
   register: (registration: PlayerRegistration) => Promise<ActionResult>
+  remove: (registration: PlayerRegistration) => Promise<ActionResult>
 }
 
-function TeamCard({ team, players, register, isExtra, userId }: TeamCardProps) {
+function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCardProps) {
   const isPlayableTeam = !isExtra;
 
   return (
@@ -96,14 +87,24 @@ function TeamCard({ team, players, register, isExtra, userId }: TeamCardProps) {
       "grid w-72 grid-rows-[auto_1fr_auto]",
       {
         "border-primary border-2": isPlayableTeam,
+        "border-green-600 border-2": players.length === TEAM_LIMIT
       }
     )}>
       <CardHeader>
         <CardTitle className="text-2xl font-semibold text-center">{team}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-2">
-          {players.map((player, index) => <PlayerCard key={player.name} player={player} userId={userId} isKeeper={index === 0} />)}
+        <div className="flex flex-col gap-2">
+          {players.map((player, index) =>
+            <PlayerCard
+              key={player.name}
+              team={team}
+              player={player}
+              userId={userId}
+              isKeeper={index === 0}
+              action={remove}
+            />
+          )}
         </div>
       </CardContent>
 
@@ -119,6 +120,7 @@ export function EventManagement({ event, userId }: EventManagementProps) {
   const [state, dispatch] = useReducer(reducer, event.teams);
 
   const register = registerPlayerAction.bind(null, channel);
+  const remove = cancelRegistration.bind(null, channel);
 
   useEffect(() => {
     const channelSubscription = pusherClient.subscribe(channel);
@@ -140,7 +142,15 @@ export function EventManagement({ event, userId }: EventManagementProps) {
       <div className="w-4/5 md:w-full flex flex-wrap justify-center gap-4 mb-6">
         {
           Object.entries(state).map(([name, team]) => 
-            <TeamCard key={name} team={name} players={team} register={register} userId={userId} isExtra={name === event.extraTeam}/>
+            <TeamCard
+              key={name}
+              team={name}
+              players={team}
+              register={register}
+              remove={remove}
+              userId={userId}
+              isExtra={name === event.extraTeam}
+            />
           )
         }
       </div>
@@ -148,11 +158,58 @@ export function EventManagement({ event, userId }: EventManagementProps) {
   )
 }
 
-type RegisterDialogProps = {
+type CancelDialogProps = {
   team: string;
-  players: Player[];
-  isPlayableTeam: boolean;
+  playerName: string;
   action: (registration: PlayerRegistration) => Promise<ActionResult>
+}
+
+export function CancelDialog({ team, playerName, action }: CancelDialogProps) {
+  const handleRemoval = async (): Promise<void> => {
+    const res = await action({ team, playerName });
+
+    if (res.error)
+      return void toast.error(res.msg);
+
+    toast.success(`El jugador ${playerName} ha cancelado`)
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon"
+            className="text-destructive"
+          >
+            <Delete />
+          </Button>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent className="w-4/5 rounded-lg">
+        <AlertDialogHeader>
+          <AlertDialogTitle>{playerName} está abandonando el equipo {team}</AlertDialogTitle>
+
+          <AlertDialogDescription>
+            <p>Si decides continuar asegúrate de <span className="font-bold">comunicarlo en el grupo.</span></p>
+
+            <p>De igual forma les llegará el registro actualizado.</p>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel>¡Jugar!</AlertDialogCancel>
+
+          <AlertDialogAction
+            onClick={handleRemoval}
+            className="bg-destructive"
+          >
+              Abandonar <LogOut />
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
 }
 
 export function SubmitButton() {
@@ -167,7 +224,6 @@ export function SubmitButton() {
 
 export function RegisterDialog({ team, players, isPlayableTeam, action }: RegisterDialogProps) {
   const [playerName, setPlayer] = useState("");
-  const [open, setOpen] = useState(false);
   const teamFull = isPlayableTeam && players.length >= TEAM_LIMIT;
 
   const remainingMsg = isPlayableTeam ? `(faltan ${TEAM_LIMIT - players.length})` : "";
@@ -179,17 +235,16 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
       return void toast.error(res.msg);
 
     setPlayer("");
-    setOpen(false)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild disabled={teamFull}>
+    <Dialog>
+      <DialogTrigger asChild>
         <Button variant="outline" className={clsx(
           "w-full",
           {
-          "bg-primary": !teamFull,
-          "bg-green-600": teamFull
+            "bg-primary": !teamFull,
+            "bg-green-600 pointer-events-none": teamFull
           }
         )}>
           {teamFull ? <CircleCheckBig /> : <UserPlus />}
@@ -200,7 +255,7 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
 
         <DialogContent className="w-4/5 rounded-lg">
           <DialogHeader>
-            <DialogTitle>Jugarás para el equipo {team}</DialogTitle>
+            <DialogTitle>Registro para el equipo {team}</DialogTitle>
             <DialogDescription>
               Una vez te registres te comprometes a <span className="font-bold">llegar a tiempo</span> al evento
             </DialogDescription>
@@ -210,7 +265,13 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
           <Label htmlFor="name" className="sr-only">
             Nombre del jugador
           </Label>
-          <Input id="link" placeholder="Jose Rueda" value={playerName} onChange={ev => setPlayer(ev.target.value)}/>
+
+          <Input
+            id="link"
+            placeholder="Jose Rueda"
+            value={playerName}
+            onChange={ev => setPlayer(ev.target.value)}
+          />
 
           <SubmitButton />
         </form>
