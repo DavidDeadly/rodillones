@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 
 import { EventManagement } from '#/components/event-management';
 import { findById } from '#/lib/event.repository';
-import { getServerUser } from '#/lib/supabase/get-user';
+import { getServerUser } from '#/lib/supabase/get-user-server';
 
 interface EventProps {
   params: Promise<{ id: string }>

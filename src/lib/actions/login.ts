@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { ActionResult } from "../event.repository";
-import { createClient } from "../supabase/server";
+import { supabaseServer } from "../supabase/server";
 import { getGroupParticipants } from "../whatsapp.service";
 
 export async function loginPasslessPhone(
@@ -53,7 +53,7 @@ async function requestOtp(number: string): Promise<ActionResult<string>> {
 	const participationError = await validateParticipant(phone);
 	if (participationError) return participationError;
 
-	const supabase = await createClient();
+	const supabase = await supabaseServer();
 	const { error } = await supabase.auth.signInWithOtp({ phone });
 
 	if (error) redirect("/error");
@@ -68,7 +68,7 @@ async function verifyOtp(
 	phone: string,
 	token: string,
 ): Promise<ActionResult<string>> {
-	const supabase = await createClient();
+	const supabase = await supabaseServer();
 
 	const {
 		data: { session },

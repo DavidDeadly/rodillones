@@ -1,7 +1,7 @@
 'use client'
 
 import clsx from "clsx";
-import { useEffect, useReducer, useState } from "react";
+import { use, useEffect, useReducer, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader, UserCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
+import { useUser } from "#/lib/supabase/get-user-client";
 
 interface EventManagementProps {
   event: Event;
@@ -47,9 +48,13 @@ function reducer(state: Event['teams'], action: Action): Event['teams'] {
   throw Error('Unknown action: ' + action.type);
 }
 
+
 export function EventManagement({ event }: EventManagementProps) {
   const channel = event.id;
   const [state, dispatch] = useReducer(reducer, event.teams);
+  const user = useUser();
+
+  console.log({ client: user });
 
   const register = registerPlayerAction.bind(null, channel);
 
@@ -91,9 +96,16 @@ export function EventManagement({ event }: EventManagementProps) {
                   {
                     team.map((player, index) => {
                       const isKeeper = index === 0;
+                      const registerByMe = player.registerBy === user?.id;
 
                       return (
-                        <div key={index} className={clsx(isKeeper && "col-span-2", "bg-[#2A2A3A] rounded py-1 px-2")}>
+                        <div key={index} className={clsx(
+                          "col-span-2", "bg-[#2A2A3A] rounded py-1 px-2",
+                          {
+                            "col-span-2": isKeeper,
+                            "bg-primary":  registerByMe
+                          }
+                        )}>
                           <p className="text-center">{player.name}</p>
                         </div>
 

@@ -10,7 +10,7 @@ import {
 	registerPlayer,
 } from "../event.repository";
 import { pusher } from "../pusher";
-import { createClient } from "../supabase/server";
+import { supabaseServer } from "../supabase/server";
 import { sendMessage } from "../whatsapp.service";
 
 const PlayerRegistrationSchema = z.object({
@@ -24,7 +24,7 @@ export async function registerPlayerAction(
 	eventId: string,
 	registration: PlayerRegistration,
 ): Promise<ActionResult> {
-	const supabase = await createClient();
+	const supabase = await supabaseServer();
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();

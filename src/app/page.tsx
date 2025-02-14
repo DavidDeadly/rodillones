@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getServerUser } from "#/lib/supabase/get-user";
+import { getServerUser } from "#/lib/supabase/get-user-server";
 
 export default async function Home() {
   const user = await getServerUser();
