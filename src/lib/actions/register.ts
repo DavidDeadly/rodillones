@@ -113,8 +113,7 @@ Dirección: ${event.address}
 https://maps.app.goo.gl/ikk2aHTpGzpk16UH9
 ${stringTeams}
 `;
-	// TODO: remove limits on extra team
-	// TODO: allow player removal and take from the extra to fill the empty
+	// TODO: allow player removal
 	// TODO: trace events on the application and show them on a side bar
 
 	await sendMessage(msg);

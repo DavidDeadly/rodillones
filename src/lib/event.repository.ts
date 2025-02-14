@@ -95,8 +95,10 @@ export async function registerPlayer(
 
 	const players = docEvent.teams[team] ?? [];
 	const allPlayers = Object.values(docEvent.teams).flat();
+	const isPlayable = docEvent.extraTeam !== team;
+	const teamComplete = isPlayable && players.length >= TEAM_LIMIT;
 
-	if (players.length >= TEAM_LIMIT)
+	if (teamComplete)
 		return {
 			error: true,
 			msg: "Al parecer el equipo ya está completo",
