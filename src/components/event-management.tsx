@@ -80,24 +80,34 @@ function PlayerCard({ player, isKeeper }: { player: Player, isKeeper: boolean })
   )
 }
 
-function TeamCard({ team, players, register }: { team: string, players: Event['teams'][string], register: (registration: PlayerRegistration) => Promise<ActionResult> }) {
+export interface TeamCardProps {
+  team: string,
+  players: Event['teams'][string],
+  isExtra: boolean,
+  register: (registration: PlayerRegistration) => Promise<ActionResult>
+}
+
+function TeamCard({ team, players, register, isExtra }: TeamCardProps) {
+  const isPlayableTeam = !isExtra;
+
   return (
-    <Card className="grid grid-rows-[auto_1fr_auto]">
+    <Card className={clsx(
+      "grid grid-rows-[auto_1fr_auto]",
+      {
+        "border-primary border-2": isPlayableTeam,
+      }
+    )}>
       <CardHeader>
         <CardTitle className="text-2xl font-semibold text-center">{team}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-2">
-          {
-            players.map((player, index) =>
-                <PlayerCard key={player.name} player={player} isKeeper={index === 0} />
-            )
-          }
+          {players.map((player, index) => <PlayerCard key={player.name} player={player} isKeeper={index === 0} />)}
         </div>
       </CardContent>
 
       <CardFooter>
-        <RegisterDialog team={team} players={players} action={register}/>
+        <RegisterDialog team={team} players={players} isPlayableTeam={isPlayableTeam} action={register}/>
       </CardFooter>
     </Card>
   )
@@ -152,7 +162,7 @@ export function EventManagement({ event }: EventManagementProps) {
       <div className="w-4/5 md:w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {
           Object.entries(state).map(([name, team]) => 
-            <TeamCard key={name} team={name} players={team} register={register}/>
+            <TeamCard key={name} team={name} players={team} register={register} isExtra={name === event.extraTeam}/>
           )
         }
       </div>
@@ -163,6 +173,7 @@ export function EventManagement({ event }: EventManagementProps) {
 type RegisterDialogProps = {
   team: string;
   players: Player[];
+  isPlayableTeam: boolean;
   action: (registration: PlayerRegistration) => Promise<ActionResult>
 }
 
@@ -176,10 +187,12 @@ export function SubmitButton() {
   )
 }
 
-export function RegisterDialog({ team, players, action }: RegisterDialogProps) {
+export function RegisterDialog({ team, players, isPlayableTeam, action }: RegisterDialogProps) {
   const [playerName, setPlayer] = useState("");
   const [open, setOpen] = useState(false);
-  const teamFull = players.length >= TEAM_LIMIT;
+  const teamFull = isPlayableTeam && players.length >= TEAM_LIMIT;
+
+  const remainingMsg = isPlayableTeam ? `(faltan ${TEAM_LIMIT - players.length})` : "";
 
   const handleRegister = async (): Promise<void> => {
     const res = await action({ team, playerName });
@@ -203,7 +216,7 @@ export function RegisterDialog({ team, players, action }: RegisterDialogProps) {
         )}>
           {teamFull ? <CircleCheckBig /> : <UserPlus />}
 
-          {teamFull ? "Equipo completo" : `Añadir jugador (faltan ${TEAM_LIMIT - players.length})`}
+          {teamFull ? "Equipo completo" : `Añadir jugador ${remainingMsg}`}
         </Button>
       </DialogTrigger>
 
