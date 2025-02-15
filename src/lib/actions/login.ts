@@ -50,8 +50,9 @@ async function requestOtp(number: string): Promise<ActionResult<string>> {
 
 	const phone = `57${validation.data}`;
 
-	const participationError = await validateParticipant(phone);
-	if (participationError) return participationError;
+	// INFO: uncomment this to validate user participation
+	// const participationError = await validateParticipant(phone);
+	// if (participationError) return participationError;
 
 	const supabase = await supabaseServer();
 	const { error } = await supabase.auth.signInWithOtp({ phone });
