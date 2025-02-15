@@ -90,7 +90,7 @@ async function verifyOtp(
 	redirect("/event/67a91921d729657addde107a");
 }
 
-async function validateParticipant(
+export async function validateParticipant(
 	phone: string,
 ): Promise<ActionResult<string> | null> {
 	try {

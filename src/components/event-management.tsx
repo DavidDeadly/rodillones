@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useEffect, useReducer, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { Badge, CircleCheckBig, ClockAlert, Delete, Loader, LogOut, Timer, UserCheck, UserPlus } from "lucide-react";
+import { CircleCheckBig, Delete, Loader, LogOut, UserCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
@@ -19,7 +19,7 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Alert, AlertTitle } from "./ui/alert";
 
 type Action =
 |{

@@ -1,11 +1,11 @@
 'use client';
+import clsx from "clsx";
 import { useEffect, useState } from "react";
 
 import { pusherClient } from "#/lib/pusher/pusher-client";
 import { ChannelInfo } from "#/lib/pusher/channel";
 
 import { Badge } from "./ui/badge";
-import clsx from "clsx";
 
 type ConnectionCountProps = {
   subscriptions: number;
