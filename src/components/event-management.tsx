@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import { useEffect, useReducer, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { CircleCheckBig, Delete, Loader, LogOut, UserCheck, UserPlus } from "lucide-react";
+import { Badge, CircleCheckBig, ClockAlert, Delete, Loader, LogOut, Timer, UserCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
@@ -19,6 +19,7 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 type Action =
 |{
@@ -101,6 +102,15 @@ function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCard
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-2">
+          {
+            players.length === 0 &&
+              <Alert className={clsx({ "animate-pulse": isPlayableTeam })}>
+                <AlertTitle>
+                  ¡Esperando jugadores!
+                </AlertTitle>
+              </Alert>
+          }
+
           {players.map((player, index) =>
             <PlayerCard
               key={player.name}
