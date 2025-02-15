@@ -1,9 +1,22 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { ActionResult } from "../event.repository";
+
+import { ACTION } from "../constants";
+import {
+	ActionResult,
+	Event,
+	Player,
+	unregisterPlayer,
+} from "../event.repository";
+import { pusher } from "../pusher";
+import {
+	PlayerRegistration,
+	PlayerRegistrationSchema,
+} from "../schemas/player-registration";
 import { supabaseServer } from "../supabase/server";
-import { PlayerRegistration } from "./register";
+import { getEventNotificationMessage } from "../utils";
+import { sendMessage } from "../whatsapp.service";
 
 export async function cancelRegistration(
 	eventId: string,
@@ -16,16 +29,46 @@ export async function cancelRegistration(
 
 	if (!user) redirect("/login");
 
-	console.log(
-		`${registration.playerName} ha cancelado su registro para ${eventId}`,
-	);
+	const validation =
+		await PlayerRegistrationSchema.safeParseAsync(registration);
+	const invalid = !validation.success;
 
-	if (registration.team === "Azul") {
+	if (invalid) {
 		return {
 			error: true,
-			msg: "No se puede cancelar el registro de un jugador del equipo Azul",
+			msg: "No se ha podido pocesar la cancelación",
 		};
 	}
+
+	const { playerName, team } = validation.data;
+
+	const player: Player = {
+		name: playerName,
+		registerBy: user.id,
+	};
+
+	const cancelationEvent = { player, team };
+
+	let event: Event;
+	try {
+		const res = await unregisterPlayer(eventId, cancelationEvent);
+		if (res.error) return res;
+
+		event = res.data!;
+	} catch (err) {
+		const error = err as Error;
+		console.error(error.message);
+
+		return {
+			error: true,
+			msg: "Ha ocurrido un error al cancelar el registro",
+		};
+	}
+
+	await pusher.trigger(eventId, ACTION.REMOVAL, cancelationEvent);
+
+	const msg = getEventNotificationMessage(event);
+	await sendMessage(msg);
 
 	return {
 		error: false,

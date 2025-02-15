@@ -1,10 +1,10 @@
+import clsx from 'clsx';
 import { notFound, redirect } from 'next/navigation';
 
 import { EventManagement } from '#/components/event-management';
 import { findById } from '#/lib/event.repository';
 import { getServerUser } from '#/lib/supabase/get-user-server';
-import clsx from 'clsx';
-import { formatDate } from '#/lib/time';
+import { formatDate } from '#/lib/utils';
 
 interface EventProps {
   params: Promise<{ id: string }>

@@ -79,6 +79,46 @@ export type ActionResult<T = unknown> =
 			msg: string;
 	  };
 
+export async function unregisterPlayer(
+	id: string,
+	{ team, player }: EVENT_DATA[ACTION.INSCRIPTION],
+): Promise<ActionResult<Event>> {
+	const validation = await Base64Schema.safeParseAsync(id);
+	const invalidId = !validation.success;
+	if (invalidId) throw new Error("Not a valid id");
+
+	const docEvent = await events.findOneAndUpdate(
+		{ _id: new ObjectId(validation.data) },
+		{
+			$pull: {
+				[`teams.${team}`]: player,
+			},
+		},
+		{
+			returnDocument: "after",
+		},
+	);
+
+	const notFound = !docEvent;
+	if (notFound)
+		return {
+			error: true,
+			msg: "Este evento no existe",
+		};
+
+	const { _id, date, ...rest } = docEvent;
+	const event = {
+		id: _id.toString(),
+		date: new Date(date),
+		...rest,
+	};
+
+	return {
+		error: false,
+		data: event,
+	};
+}
+
 export async function registerPlayer(
 	id: string,
 	{ team, player }: EVENT_DATA[ACTION.INSCRIPTION],

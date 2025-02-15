@@ -11,9 +11,8 @@ export type EVENT_DATA = {
 		player: Player;
 	};
 	[ACTION.REMOVAL]: {
-		player: string;
+		player: Player;
 		team: string;
-		reason: string;
 	};
 };
 

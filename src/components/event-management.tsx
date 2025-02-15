@@ -1,14 +1,16 @@
 'use client'
 
 import clsx from "clsx";
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { CircleCheckBig, CircleX, Delete, Loader, LogOut, UserCheck, UserPlus, X } from "lucide-react";
+import { CircleCheckBig, Delete, Loader, LogOut, UserCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
 import { pusherClient } from "#/lib/pusher-client";
-import { PlayerRegistration, registerPlayerAction } from "#/lib/actions/register";
+import { registerPlayerAction } from "#/lib/actions/register";
+import { cancelRegistration } from "#/lib/actions/cancel";
+import type { PlayerRegistration } from "#/lib/schemas/player-registration";
 import { Event, ActionResult, Player } from '#/lib/event.repository';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
@@ -16,7 +18,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { cancelRegistration } from "#/lib/actions/cancel";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 
 interface EventManagementProps {
@@ -45,27 +46,36 @@ function reducer(state: Event['teams'], action: Action): Event['teams'] {
         ]
       }
     }
-  }
 
-  throw Error('Unknown action: ' + action.type);
+    case ACTION.REMOVAL: {
+      const team = state[action.team];
+      const abandonedTeam = team.filter(player => player.name !== action.player.name);
+
+      return {
+        ...state,
+        [action.team]: abandonedTeam
+      }
+    }
+  }
 }
 
 interface PlayerCardProps {
   team: string,
   player: Player,
-  isKeeper: boolean,
   userId: string
+  isKeeper: boolean,
+  isPlayableTeam: boolean,
   action: (registration: PlayerRegistration) => Promise<ActionResult>
 };
 
-function PlayerCard({ team, player, userId, action }: PlayerCardProps) {
+function PlayerCard({ team, player, userId, isPlayableTeam, action }: PlayerCardProps) {
   const registerByMe = player.registerBy === userId;
 
   return (
     <article className="flex items-center justify-around rounded bg-secondary h-10 pl-2">
       <span className="inline-block flex-1">{player.name}</span>
 
-      {registerByMe && <CancelDialog team={team} playerName={player.name} action={action} />}
+      {registerByMe && <CancelDialog team={team} playerName={player.name} isPlayableTeam={isPlayableTeam} action={action} />}
     </article>
   )
 }
@@ -81,13 +91,14 @@ export interface TeamCardProps {
 
 function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCardProps) {
   const isPlayableTeam = !isExtra;
+  const teamFull = isPlayableTeam && players.length >= TEAM_LIMIT;
 
   return (
     <Card className={clsx(
       "grid w-72 grid-rows-[auto_1fr_auto]",
       {
         "border-primary border-2": isPlayableTeam,
-        "border-green-600 border-2": players.length === TEAM_LIMIT
+        "border-green-600 border-2": teamFull
       }
     )}>
       <CardHeader>
@@ -102,6 +113,7 @@ function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCard
               player={player}
               userId={userId}
               isKeeper={index === 0}
+              isPlayableTeam={isPlayableTeam}
               action={remove}
             />
           )}
@@ -125,13 +137,18 @@ export function EventManagement({ event, userId }: EventManagementProps) {
   useEffect(() => {
     const channelSubscription = pusherClient.subscribe(channel);
 
-    const action = ACTION.INSCRIPTION;
-    channelSubscription.bind(action, (event: EVENT_DATA[typeof action]) => {
-      dispatch({ type: action, ...event });
+    const incription = ACTION.INSCRIPTION;
+    channelSubscription.bind(incription, (event: EVENT_DATA[typeof incription]) => {
+      dispatch({ type: incription, ...event });
+    });
+
+    const cancelation = ACTION.REMOVAL;
+    channelSubscription.bind(cancelation, (event: EVENT_DATA[typeof cancelation]) => {
+      dispatch({ type: cancelation, ...event });
     });
 
     return () => {
-      channelSubscription.unbind();
+      channelSubscription.unbind_all();
       channelSubscription.unsubscribe();
     }
   }, []);
@@ -161,22 +178,36 @@ export function EventManagement({ event, userId }: EventManagementProps) {
 type CancelDialogProps = {
   team: string;
   playerName: string;
+  isPlayableTeam: boolean;
   action: (registration: PlayerRegistration) => Promise<ActionResult>
 }
 
-export function CancelDialog({ team, playerName, action }: CancelDialogProps) {
+export function CancelDialog({ team, playerName, isPlayableTeam, action }: CancelDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [removing, startRemoval] = useTransition();
+
   const handleRemoval = async (): Promise<void> => {
-    const res = await action({ team, playerName });
+    startRemoval(async () => {
+      const res = await action({ team, playerName });
 
-    if (res.error)
-      return void toast.error(res.msg);
+      if (res.error)
+        return void toast.error(res.msg);
 
-    toast.success(`El jugador ${playerName} ha cancelado`)
+      toast.success(`El jugador ${playerName} ha cancelado`)
+      setOpen(false);
+    });
   }
 
+  const titleConnector = isPlayableTeam ? `abandonando el equipo`: 'saliendo de la reserva';
+  const cancelText = isPlayableTeam ? "Abandonar" : "Cancelar";
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
+    <AlertDialog open={open}>
+      <AlertDialogTrigger
+        asChild
+        disabled={removing} 
+        onClick={() => setOpen(true)}
+      >
           <Button
             variant="outline"
             size="icon"
@@ -188,23 +219,37 @@ export function CancelDialog({ team, playerName, action }: CancelDialogProps) {
 
       <AlertDialogContent className="w-4/5 rounded-lg">
         <AlertDialogHeader>
-          <AlertDialogTitle>{playerName} está abandonando el equipo {team}</AlertDialogTitle>
+          <AlertDialogTitle>{playerName} está {titleConnector} {team}</AlertDialogTitle>
 
           <AlertDialogDescription>
-            <p>Si decides continuar asegúrate de <span className="font-bold">comunicarlo en el grupo.</span></p>
+            {
+              isPlayableTeam ?
+                <>
+                  <p>De seguir con abandonar asegúrate de <span className="font-bold">comunicarlo al grupo.</span></p>
+                  <p>De igual forma les llegará el registro actualizado.</p>
+                </>
+                :
+                <p>De tener la fecha del evento disponible agradeceriamos que <span className="font-bold">permanecer en la reserva</span>, para poder cubrir posibles inconvenientes</p>
+            }
+            
 
-            <p>De igual forma les llegará el registro actualizado.</p>
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>¡Jugar!</AlertDialogCancel>
+          <AlertDialogCancel
+            disabled={removing}
+            onClick={() => setOpen(false)}
+          >
+            ¡Jugar!
+          </AlertDialogCancel>
 
           <AlertDialogAction
+            disabled={removing}
             onClick={handleRemoval}
             className="bg-destructive"
           >
-              Abandonar <LogOut />
+            {cancelText} <LogOut />
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -220,6 +265,13 @@ export function SubmitButton() {
       {pending ? <Loader className="animate-spin animate"/> : <UserCheck />}
     </Button>
   )
+}
+
+type RegisterDialogProps = {
+  team: string;
+  players: Player[];
+  isPlayableTeam: boolean;
+  action: (registration: PlayerRegistration) => Promise<ActionResult>
 }
 
 export function RegisterDialog({ team, players, isPlayableTeam, action }: RegisterDialogProps) {

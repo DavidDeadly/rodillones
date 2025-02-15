@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { z } from "zod";
-import { ACTION, TEAM_LIMIT } from "../constants";
+
+import { ACTION } from "../constants";
 import {
 	type ActionResult,
 	Event,
@@ -10,16 +10,13 @@ import {
 	registerPlayer,
 } from "../event.repository";
 import { pusher } from "../pusher";
+import {
+	PlayerRegistration,
+	PlayerRegistrationSchema,
+} from "../schemas/player-registration";
 import { supabaseServer } from "../supabase/server";
-import { formatDate } from "../time";
+import { getEventNotificationMessage } from "../utils";
 import { sendMessage } from "../whatsapp.service";
-
-const PlayerRegistrationSchema = z.object({
-	team: z.string(),
-	playerName: z.string().trim().min(2),
-});
-
-export type PlayerRegistration = z.infer<typeof PlayerRegistrationSchema>;
 
 export async function registerPlayerAction(
 	eventId: string,
@@ -70,51 +67,9 @@ export async function registerPlayerAction(
 
 	await pusher.trigger(eventId, ACTION.INSCRIPTION, registrationEvent);
 
-	const longDate = formatDate(event.date, { dateStyle: "full" });
-	const time12 = formatDate(event.date, { timeStyle: "short", hour12: true });
-
-	let stringTeams = "";
-
-	for (const team in event.teams) {
-		const isPlayable = event.extraTeam !== team;
-		const length = isPlayable ? TEAM_LIMIT : event.teams[team].length;
-
-		const players = Array.from(
-			{ length },
-			(_, i) => event.teams[team][i] ?? {},
-		);
-
-		const teamPrefix = isPlayable ? "Equipo Camisa " : "";
-		stringTeams += `\n${teamPrefix}${team}\n\n`;
-
-		stringTeams += players
-			.map((player, index) => {
-				const isKeeper = isPlayable && index === 0;
-				const isLast = index === players.length - 1;
-
-				const { name = "" } = player;
-
-				if (isKeeper) return `🧤. ${name}\n`;
-
-				const newLine = isLast ? "\n" : "";
-				const num = index + 1;
-
-				return `${num}. ${name}${newLine}`;
-			})
-			.join("\n");
-	}
-
-	const msg = `
-${longDate}
-${time12}
-${event.description}
-Dirección: ${event.address.text} 
-
-${event.address.url}
-${stringTeams}
-`;
 	// TODO: trace events on the application and show them on a side bar
 
+	const msg = getEventNotificationMessage(event);
 	await sendMessage(msg);
 
 	return {
