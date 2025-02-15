@@ -5,6 +5,8 @@ import { EventManagement } from '#/components/event-management';
 import { findById } from '#/lib/event.repository';
 import { getServerUser } from '#/lib/supabase/get-user-server';
 import { formatDate } from '#/lib/utils';
+import { ConnectionCount } from '#/components/connections-count';
+import { getChannelInfo } from '#/lib/pusher/channel';
 
 interface EventProps {
   params: Promise<{ id: string }>
@@ -22,6 +24,8 @@ export default async function Event({ params }: EventProps) {
   const noEvent = !event;
   if (noEvent) return notFound();
 
+  const channel = event.id;
+  const [subscriptions] = await getChannelInfo(channel);
   const longDate = formatDate(event.date, { dateStyle: "full" });
   const time12 = formatDate(event.date, { timeStyle: "short", hour12: true });
 
@@ -44,7 +48,26 @@ export default async function Event({ params }: EventProps) {
         </section>
       </header>
 
-      <EventManagement event={event} userId={user.id}/>
+      <EventManagement
+        channel={channel}
+        event={event}
+        userId={user.id}
+      />
+
+      {
+        subscriptions !== null &&
+          <aside
+            className={clsx([
+              "w-full mt-4 py-2 grid place-content-center rounded-none border-dashed border-0 border-t",
+              "sticky z-50 bottom-0 bg-background/95 backdrop-blur-0 supports-[backdrop-filter]:bg-background/60"
+            ])}
+          >
+            <ConnectionCount
+              channel={channel}
+              subscriptions={subscriptions}
+            />
+          </aside>
+      }
     </>
   )
 }

@@ -7,7 +7,7 @@ import { CircleCheckBig, Delete, Loader, LogOut, UserCheck, UserPlus } from "luc
 import { toast } from "sonner";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
-import { pusherClient } from "#/lib/pusher-client";
+import { pusherClient } from "#/lib/pusher/pusher-client";
 import { registerPlayerAction } from "#/lib/actions/register";
 import { cancelRegistration } from "#/lib/actions/cancel";
 import type { PlayerRegistration } from "#/lib/schemas/player-registration";
@@ -19,11 +19,6 @@ import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
-
-interface EventManagementProps {
-  event: Event;
-  userId: string;
-}
 
 type Action =
 |{
@@ -127,8 +122,13 @@ function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCard
   )
 }
 
-export function EventManagement({ event, userId }: EventManagementProps) {
-  const channel = event.id;
+interface EventManagementProps {
+  channel: string;
+  event: Event;
+  userId: string;
+}
+
+export function EventManagement({ channel, event, userId }: EventManagementProps) {
   const [state, dispatch] = useReducer(reducer, event.teams);
 
   const register = registerPlayerAction.bind(null, channel);
@@ -155,7 +155,6 @@ export function EventManagement({ event, userId }: EventManagementProps) {
 
   return (
     <div className="w-full flex flex-col gap-5 items-center">
-
       <div className="w-4/5 md:w-full flex flex-wrap justify-center gap-4 mb-6">
         {
           Object.entries(state).map(([name, team]) => 

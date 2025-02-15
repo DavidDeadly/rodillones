@@ -1,10 +1,11 @@
 import Pusher from "pusher";
+
 import {
 	NEXT_PUBLIC_PUSHER_CLUSTER,
 	NEXT_PUBLIC_PUSHER_KEY,
 	PUSHER_APP_ID,
 	PUSHER_SECRET,
-} from "./env";
+} from "#/lib/env";
 
 export const pusher = new Pusher({
 	appId: PUSHER_APP_ID!,

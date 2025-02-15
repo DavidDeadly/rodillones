@@ -9,7 +9,7 @@ import {
 	Player,
 	registerPlayer,
 } from "../event.repository";
-import { pusher } from "../pusher";
+import { pusher } from "../pusher/pusher";
 import {
 	PlayerRegistration,
 	PlayerRegistrationSchema,
