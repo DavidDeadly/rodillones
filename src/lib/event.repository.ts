@@ -117,6 +117,15 @@ export async function registerPlayer(
 		};
 
 	const players = docEvent.teams[team] ?? [];
+	const keeper = players.find((player) => player.isKeeper);
+
+	if (player.isKeeper && keeper) {
+		return {
+			error: true,
+			msg: `Ya el equipo tiene a ${keeper.name} como arquero`,
+		};
+	}
+
 	const allPlayers = Object.values(docEvent.teams).flat();
 	const isPlayable = docEvent.extraTeam !== team;
 	const teamComplete = isPlayable && players.length >= TEAM_LIMIT;
