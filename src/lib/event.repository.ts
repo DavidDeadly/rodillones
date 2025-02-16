@@ -59,7 +59,7 @@ export type ActionResult<T = unknown> =
 
 export async function unregisterPlayer(
 	id: string,
-	{ team, player }: EVENT_DATA[ACTION.INSCRIPTION],
+	{ team, player }: EVENT_DATA[ACTION.REMOVAL],
 ): Promise<ActionResult<Event>> {
 	const validation = await Base64Schema.safeParseAsync(id);
 	const invalidId = !validation.success;

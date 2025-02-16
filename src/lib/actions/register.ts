@@ -23,7 +23,7 @@ export async function registerPlayerAction(
 		data: { user },
 	} = await supabase.auth.getUser();
 
-	if (!user) redirect("/login");
+	if (!user) return redirect("/login");
 
 	const validation =
 		await PlayerRegistrationSchema.safeParseAsync(registration);

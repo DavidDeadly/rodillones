@@ -40,27 +40,36 @@ export function getEventNotificationMessage(event: Event): string {
 
 	for (const team in event.teams) {
 		const isPlayable = event.extraTeam !== team;
-		const length = isPlayable ? TEAM_LIMIT : event.teams[team].length;
+		const registeredPlayers = event.teams[team];
 
-		const players = Array.from(
-			{ length },
-			(_, i) => event.teams[team][i] ?? {},
-		);
+		const keeper = isPlayable
+			? registeredPlayers.find((player) => player.isKeeper)
+			: null;
+		const fieldPlayers = isPlayable
+			? registeredPlayers.filter((player) => !player.isKeeper)
+			: registeredPlayers;
+
+		const fieldPlayersSize = TEAM_LIMIT - 1;
+		const length = isPlayable ? fieldPlayersSize : event.teams[team].length;
+		const players = Array.from({ length }, (_, i) => fieldPlayers[i] ?? {});
 
 		const teamPrefix = isPlayable ? "Equipo Camisa " : "";
-		stringTeams += `\n${teamPrefix}${team}\n\n`;
+		stringTeams += `\n${teamPrefix}${team}\n`;
+
+		if (isPlayable) {
+			const { name = "" } = keeper ?? {};
+
+			stringTeams += `\n🧤. ${name}\n\n`;
+		}
 
 		stringTeams += players
 			.map((player, index) => {
-				const isKeeper = isPlayable && index === 0;
-				const isLast = index === players.length - 1;
-
 				const { name = "" } = player;
 
-				if (isKeeper) return `🧤. ${name}\n`;
-
+				const oneIndexAndIgnoreKeeper = 2;
+				const num = index + oneIndexAndIgnoreKeeper;
+				const isLast = index === players.length - 1;
 				const newLine = isLast ? "\n" : "";
-				const num = index + 1;
 
 				return `${num}. ${name}${newLine}`;
 			})

@@ -16,14 +16,14 @@ import { sendMessage } from "../whatsapp.service";
 
 export async function cancelRegistration(
 	eventId: string,
-	registration: PlayerRegistration,
+	registration: Omit<PlayerRegistration, "isKeeper">,
 ): Promise<ActionResult> {
 	const supabase = await supabaseServer();
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
 
-	if (!user) redirect("/login");
+	if (!user) return redirect("/login");
 
 	const validation =
 		await PlayerRegistrationSchema.safeParseAsync(registration);
@@ -38,7 +38,7 @@ export async function cancelRegistration(
 
 	const { playerName, team } = validation.data;
 
-	const player: Player = {
+	const player: Omit<Player, "isKeeper"> = {
 		name: playerName,
 		registerBy: user.id,
 	};
