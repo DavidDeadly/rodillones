@@ -3,12 +3,8 @@
 import { redirect } from "next/navigation";
 
 import { ACTION } from "../constants";
-import {
-	ActionResult,
-	Event,
-	Player,
-	unregisterPlayer,
-} from "../event.repository";
+import { Player } from "../db/client";
+import { ActionResult, Event, unregisterPlayer } from "../event.repository";
 import { pusher } from "../pusher/pusher";
 import {
 	PlayerRegistration,
@@ -71,7 +67,7 @@ export async function cancelRegistration(
 		const msg = getEventNotificationMessage(event);
 
 		await sendMessage(msg);
-	} catch (err) {
+	} catch {
 		console.error(
 			"No se pudo enviar el mensaje pero la integridad del evento no fue comprometidad",
 		);

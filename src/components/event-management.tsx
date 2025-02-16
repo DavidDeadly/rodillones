@@ -11,7 +11,7 @@ import { pusherClient } from "#/lib/pusher/pusher-client";
 import { registerPlayerAction } from "#/lib/actions/register";
 import { cancelRegistration } from "#/lib/actions/cancel";
 import type { PlayerRegistration } from "#/lib/schemas/player-registration";
-import { Event, ActionResult, Player } from '#/lib/event.repository';
+import { Event, ActionResult } from '#/lib/event.repository';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -20,6 +20,7 @@ import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Alert, AlertTitle } from "./ui/alert";
+import { Player } from "#/lib/db/client";
 
 type Action =
 |{

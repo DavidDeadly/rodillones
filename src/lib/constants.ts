@@ -1,4 +1,4 @@
-import { Player } from "./event.repository";
+import { Player } from "./db/client";
 
 export const enum ACTION {
 	INSCRIPTION = "inscription",
