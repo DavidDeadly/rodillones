@@ -22,7 +22,8 @@ export async function getChannelInfo(
 	}
 
 	const { subscription_count }: ChannelInfo = (await channelReq.json()) ?? {};
-	const subscriptions = subscription_count ? subscription_count : null;
+	const count = Number(subscription_count);
+	const subscriptions = Number.isNaN(count) ? null : count;
 
 	return [subscriptions];
 }

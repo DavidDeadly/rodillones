@@ -15,7 +15,7 @@ interface EventProps {
 export default async function Event({ params }: EventProps) {
   const user = await getServerUser();
 
-  if (!user) redirect("/login");
+  if (!user) return redirect("/login");
 
   const { id } = await params;
 
