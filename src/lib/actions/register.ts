@@ -36,11 +36,12 @@ export async function registerPlayerAction(
 		};
 	}
 
-	const { playerName, team } = validation.data;
+	const { playerName, team, isKeeper } = validation.data;
 
 	const player: Player = {
 		name: playerName,
 		registerBy: user.id,
+		isKeeper,
 	};
 
 	const registrationEvent = { player, team };

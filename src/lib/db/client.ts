@@ -19,7 +19,7 @@ const rodillones = client.db(DB);
 export type Player = {
 	name: string;
 	registerBy: string;
-	isKeeper?: boolean;
+	isKeeper: boolean;
 };
 
 export type Team = Player[];

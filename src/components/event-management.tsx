@@ -21,6 +21,7 @@ import { Input } from "./ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { Alert, AlertTitle } from "./ui/alert";
 import { Player } from "#/lib/db/client";
+import { Checkbox } from "./ui/checkbox";
 
 type Action =
 |{
@@ -241,7 +242,7 @@ export function CancelDialog({ team, playerName, isPlayableTeam, action }: Cance
     });
   }
 
-  const titleConnector = isPlayableTeam ? `abandonando el equipo`: 'saliendo de la reserva';
+  const titleConnector = isPlayableTeam ? "abandonando el equipo": "saliendo de la reserva";
   const cancelText = isPlayableTeam ? "Abandonar" : "Cancelar";
 
   return (
@@ -274,8 +275,6 @@ export function CancelDialog({ team, playerName, isPlayableTeam, action }: Cance
                 :
                 <p>De tener la fecha del evento disponible agradeceriamos que <span className="font-bold">permanecer en la reserva</span>, para poder cubrir posibles inconvenientes</p>
             }
-            
-
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -319,18 +318,34 @@ type RegisterDialogProps = {
 
 export function RegisterDialog({ team, players, isPlayableTeam, action }: RegisterDialogProps) {
   const [playerName, setPlayer] = useState("");
+  const [isKeeper, setIsKeeper] = useState(false);
+  const [onlyKeeperLeft, setOnlyKeeperLeft] = useState(false);
+
   const teamFull = isPlayableTeam && players.length >= TEAM_LIMIT;
 
   const remainingMsg = isPlayableTeam ? `(faltan ${TEAM_LIMIT - players.length})` : "";
 
   const handleRegister = async (): Promise<void> => {
-    const res = await action({ team, playerName });
+    const res = await action({ team, playerName, isKeeper });
 
     if (res.error)
       return void toast.error(res.msg);
 
     setPlayer("");
   }
+
+  useEffect(() => {
+    const isExtraTeam = !isPlayableTeam;
+    if (isExtraTeam) return;
+
+    const fieldPlayers = players.filter((player) => !player.isKeeper);
+    const onlyNeedKeeper = fieldPlayers.length === TEAM_LIMIT - 1;
+    
+    setOnlyKeeperLeft(onlyNeedKeeper);
+    setIsKeeper(onlyNeedKeeper);
+  }, [players, isPlayableTeam]);
+
+  const titleConnector = isPlayableTeam ? "para el equipo": "en";
 
   return (
     <Dialog>
@@ -350,25 +365,53 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
 
         <DialogContent className="w-4/5 rounded-lg">
           <DialogHeader>
-            <DialogTitle>Registro para el equipo {team}</DialogTitle>
+          <DialogTitle>Registro {titleConnector} {team}</DialogTitle>
+
             <DialogDescription>
-              Una vez te registres te comprometes a <span className="font-bold">llegar a tiempo</span> al evento
+            {
+              isPlayableTeam ?
+                <>Una vez te registres te comprometes a <span className="font-bold">llegar a tiempo</span> al evento</>
+                :
+                <>
+                  <p>La reserva entra en <span className="font-bold">orden de registro</span>.</p>
+                  <p>Estar pendiente del grupo para cuando se libere un campo</p>
+                </>
+            }
             </DialogDescription>
           </DialogHeader>
 
-        <form action={handleRegister} className="flex gap-2">
-          <Label htmlFor="name" className="sr-only">
-            Nombre del jugador
-          </Label>
+        <form action={handleRegister} className="flex flex-col gap-4">
+          <section className="flex gap-2">
+            <Label htmlFor="name" className="sr-only">
+              Nombre del jugador
+            </Label>
 
-          <Input
-            id="link"
-            placeholder="Jose Rueda"
-            value={playerName}
-            onChange={ev => setPlayer(ev.target.value)}
-          />
+            <Input
+              id="link"
+              placeholder="Jose Rueda"
+              value={playerName}
+              onChange={ev => setPlayer(ev.target.value)}
+            />
 
-          <SubmitButton />
+            <SubmitButton />
+          </section>
+          {
+            isPlayableTeam && 
+              <section className="flex gap-2">
+                <Checkbox
+                  id="isKeeper"
+                  checked={isKeeper}
+                  disabled={onlyKeeperLeft}
+                  onClick={() => setIsKeeper(wasKeeper => !wasKeeper)} />
+
+                <label
+                  htmlFor="isKeeper"
+                  className="text-sm font-extrabold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Registrar como Arquero 🧤
+                </label>
+              </section>
+          }
         </form>
         </DialogContent>
     </Dialog>
