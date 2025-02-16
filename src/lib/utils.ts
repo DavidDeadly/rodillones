@@ -66,8 +66,10 @@ export function getEventNotificationMessage(event: Event): string {
 			.map((player, index) => {
 				const { name = "" } = player;
 
-				const oneIndexAndIgnoreKeeper = 2;
-				const num = index + oneIndexAndIgnoreKeeper;
+				const ignoreKeeper = 1;
+				const oneIndex = 1;
+				const numIncrease = isPlayable ? oneIndex + ignoreKeeper : oneIndex;
+				const num = index + numIncrease;
 				const isLast = index === players.length - 1;
 				const newLine = isLast ? "\n" : "";
 
