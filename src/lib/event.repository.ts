@@ -1,8 +1,9 @@
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import { z } from "zod";
 
-import { ACTION, COLLECTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
-import { DB, DB_PASS, DB_USER } from "#/lib/env";
+import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
+import { DB_PASS, DB_USER } from "#/lib/env";
+import { events, DocEvent } from "./db/client";
 
 const uri = `mongodb+srv://${DB_USER}:${DB_PASS}@main.vqq3x.mongodb.net/?retryWrites=true&w=majority&appName=main`;
 const client = new MongoClient(uri, {
@@ -14,29 +15,6 @@ const client = new MongoClient(uri, {
 });
 
 await client.connect();
-const rodillones = client.db(DB);
-const events = rodillones.collection<DocEvent>(COLLECTION.EVENT);
-
-export type Player = {
-	name: string;
-	registerBy: string;
-};
-
-export type Team = Player[];
-
-export type Address = {
-	text: string;
-	url: string;
-};
-
-interface DocEvent {
-	_id: ObjectId;
-	date: string;
-	address: Address;
-	description: string;
-	teams: Record<string, Team>;
-	extraTeam: string;
-}
 
 export type Event = Omit<DocEvent, "_id" | "date"> & {
 	id: string;

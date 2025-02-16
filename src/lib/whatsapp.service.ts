@@ -1,4 +1,5 @@
 import { MAYTAPI_API_TOKEN, MAYTAPI_PHONE_ID, MAYTAPI_PRODUCT_ID } from "./env";
+import { getGroup } from "./groups.repository";
 
 const MAYTAPI_URL = `https://api.maytapi.com/api/${MAYTAPI_PRODUCT_ID}/${MAYTAPI_PHONE_ID}`;
 const MAYTAPI_HEADER = "x-maytapi-key";
@@ -35,6 +36,17 @@ export interface Config {
 }
 
 export async function getGroupParticipants(): Promise<string[]> {
+	const group = await getGroup(GROUP_ID);
+
+	const notFound = !group;
+	if (notFound) throw new Error("Could get group participants");
+
+	const participants = group.participants.map((user) => user.id);
+
+	return participants;
+}
+
+export async function refreshGroupsParticipants(): Promise<string[]> {
 	const res = await fetch(`${MAYTAPI_URL}/getGroups/${GROUP_ID}`, {
 		headers,
 	});

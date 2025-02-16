@@ -21,7 +21,8 @@ export const enum ENDPOINT {
 }
 
 export const enum COLLECTION {
-	EVENT = "Events",
+	EVENTS = "Events",
+	WHATSAPP_GROUPS = "WhatsAppGroups",
 }
 
 export const TEAM_LIMIT = 7;
