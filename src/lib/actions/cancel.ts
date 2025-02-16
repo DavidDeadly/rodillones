@@ -67,8 +67,15 @@ export async function cancelRegistration(
 
 	await pusher.trigger(eventId, ACTION.REMOVAL, cancelationEvent);
 
-	const msg = getEventNotificationMessage(event);
-	await sendMessage(msg);
+	try {
+		const msg = getEventNotificationMessage(event);
+
+		await sendMessage(msg);
+	} catch (err) {
+		console.error(
+			"No se pudo enviar el mensaje pero la integridad del evento no fue comprometidad",
+		);
+	}
 
 	return {
 		error: false,

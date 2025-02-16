@@ -1,13 +1,17 @@
-import { MAYTAPI_API_TOKEN, MAYTAPI_PHONE_ID, MAYTAPI_PRODUCT_ID } from "./env";
+import { WHAPI_TOKEN, ZAPLY_INSTANCE, ZAPLY_TOKEN } from "./env";
 import { getGroup } from "./groups.repository";
 
-const MAYTAPI_URL = `https://api.maytapi.com/api/${MAYTAPI_PRODUCT_ID}/${MAYTAPI_PHONE_ID}`;
-const MAYTAPI_HEADER = "x-maytapi-key";
-const GROUP_ID = "120363382062731337@g.us";
-// const GROUP_ID = "573506925825@c.us";
-const headers = {
-	[MAYTAPI_HEADER]: MAYTAPI_API_TOKEN,
-} as Record<string, string>;
+const GROUP_ID =
+	process.env.NODE_ENV === "production"
+		? "120363382062731337@g.us"
+		: "573506925825@s.whatsapp.net";
+
+interface SendMessage {
+	(message: string): Promise<[messageId: string]>;
+}
+
+export const sendMessage: SendMessage =
+	process.env.NODE_ENV === "production" ? sendMessageWhapi : sendMessageZaply;
 
 export type MaytapiResponse<T> =
 	| {
@@ -46,55 +50,77 @@ export async function getGroupParticipants(): Promise<string[]> {
 	return participants;
 }
 
-export async function refreshGroupsParticipants(): Promise<string[]> {
-	const res = await fetch(`${MAYTAPI_URL}/getGroups/${GROUP_ID}`, {
-		headers,
-	});
-
-	const fetchFailed = !res.ok;
-	if (fetchFailed) throw new Error("Could get group participants");
-
-	const data: MaytapiResponse<GroupInfo> = await res.json();
-
-	const requestFailed = !data.success;
-	if (requestFailed) throw new Error(data.message);
-
-	const separator = "@";
-	const participants = data.data.participants.map(
-		(phone) => phone.split(separator).at(0)!,
-	);
-
-	return participants;
+interface Message {
+	id: string;
+	type: string;
+	from: string;
+	from_me: boolean;
+	chat_id: string;
+	timestamp: number;
+	source: string;
+	device_id: 3;
+	status: "pending" | "delivered";
+	text: {
+		body: string;
+	};
 }
 
 interface MessageSend {
-	chatId: string;
-	msgId: string;
+	sent: true;
+	message: Message;
 }
 
-export async function sendMessage(message: string): Promise<string> {
-	const res = await fetch(`${MAYTAPI_URL}/sendMessage`, {
+async function sendMessageWhapi(message: string): Promise<[messageId: string]> {
+	console.log("[WHAPI]: Sending Message");
+
+	const res = await fetch("https://gate.whapi.cloud/messages/text", {
 		method: "POST",
 		headers: {
-			...headers,
+			Authorization: `Bearer ${WHAPI_TOKEN}`,
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({
-			to_number: GROUP_ID,
-			type: "text",
-			message,
+			to: GROUP_ID,
+			body: message,
 		}),
 	});
 
 	const fetchFailed = !res.ok;
-	if (fetchFailed) {
-		throw new Error("Could send message");
-	}
+	if (fetchFailed) throw new Error("[WHAPI]: Could send message");
 
-	const data: MaytapiResponse<MessageSend> = await res.json();
+	const data: MessageSend = await res.json();
 
-	const requestFailed = !data.success;
-	if (requestFailed) throw new Error(data.message);
+	const requestFailed = !data.sent;
+	if (requestFailed) throw new Error("[WHAPI]: Message not sent");
 
-	return data.data.msgId;
+	return [data.message.id];
+}
+
+async function sendMessageZaply(message: string): Promise<[messageId: string]> {
+	console.log("[ZAPLY]: Sending Message");
+
+	const number = GROUP_ID.split("@").at(0);
+	const res = await fetch(
+		`https://api.zaply.dev/v1/instance/${ZAPLY_INSTANCE}/message/send`,
+		{
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${ZAPLY_TOKEN}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				number,
+				message,
+			}),
+		},
+	);
+
+	const fetchFailed = !res.ok;
+	if (fetchFailed) throw new Error("[ZAPLY]: Could send message");
+
+	const data: { message_id?: string } = await res.json();
+
+	if (!data.message_id) throw new Error("[ZAPLY]: Message not sent");
+
+	return [data.message_id];
 }
