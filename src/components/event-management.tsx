@@ -332,8 +332,8 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
   });
 
   const remainingMsg = isPlayableTeam ? `(${leftWord} ${playersLeft})` : "";
-  const noKeeperYet = !players.some(player => player.isKeeper);
-  const showKeeperCheck = isPlayableTeam && noKeeperYet;
+  const alreadyKeeper = players.some(player => player.isKeeper);
+  const showKeeperCheck = isPlayableTeam && !alreadyKeeper;
 
   const handleRegister = async (): Promise<void> => {
     const res = await action({ team, playerName, isKeeper });
@@ -341,6 +341,7 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
     if (res.error)
       return void toast.error(res.msg);
 
+    toast.success(`El jugador ${playerName} ha sido registrado`);
     setPlayer("");
   }
 
@@ -352,7 +353,7 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
     const onlyNeedKeeper = fieldPlayers.length === TEAM_LIMIT - 1;
     
     setOnlyKeeperLeft(onlyNeedKeeper);
-    setIsKeeper(onlyNeedKeeper);
+    setIsKeeper(alreadyKeeper ? false : onlyNeedKeeper);
   }, [players, isPlayableTeam]);
 
   const playerType = onlyKeeperLeft ? 'arquero' : 'jugador';
