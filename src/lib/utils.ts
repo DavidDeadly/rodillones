@@ -18,6 +18,20 @@ export function formatDate(
 	}).format(date);
 }
 
+interface GetPluralOption {
+	num: number;
+	one: string;
+	other: string;
+}
+
+export function getPlural(options: GetPluralOption) {
+	const { num } = options;
+	const selection = new Intl.PluralRules("es").select(num);
+
+	// @ts-expect-error next-line
+	return options[selection] as string;
+}
+
 export function getEventNotificationMessage(event: Event): string {
 	const longDate = formatDate(event.date, { dateStyle: "full" });
 	const time12 = formatDate(event.date, { timeStyle: "short", hour12: true });

@@ -22,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Alert, AlertTitle } from "./ui/alert";
 import { Player } from "#/lib/db/client";
 import { Checkbox } from "./ui/checkbox";
+import { getPlural } from "#/lib/utils";
 
 type Action =
 |{
@@ -62,7 +63,7 @@ interface PlayerCardProps {
   player: Player,
   userId: string
   isPlayableTeam: boolean,
-  action: (registration: PlayerRegistration) => Promise<ActionResult>
+  action: (registration: Omit<PlayerRegistration, 'isKeeper'>) => Promise<ActionResult>
 };
 
 function PlayerCard({ team, player, userId, isPlayableTeam, action }: PlayerCardProps) {
@@ -223,7 +224,7 @@ type CancelDialogProps = {
   team: string;
   playerName: string;
   isPlayableTeam: boolean;
-  action: (registration: PlayerRegistration) => Promise<ActionResult>
+  action: (registration: Omit<PlayerRegistration, 'isKeeper'>) => Promise<ActionResult>
 }
 
 export function CancelDialog({ team, playerName, isPlayableTeam, action }: CancelDialogProps) {
@@ -323,7 +324,14 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
 
   const teamFull = isPlayableTeam && players.length >= TEAM_LIMIT;
 
-  const remainingMsg = isPlayableTeam ? `(faltan ${TEAM_LIMIT - players.length})` : "";
+  const playersLeft = TEAM_LIMIT - players.length;
+  const leftWord = getPlural({
+    num: playersLeft,
+    one: 'falta',
+    other: 'faltan'
+  });
+
+  const remainingMsg = isPlayableTeam ? `(${leftWord} ${playersLeft})` : "";
 
   const handleRegister = async (): Promise<void> => {
     const res = await action({ team, playerName, isKeeper });
@@ -359,7 +367,10 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
         )}>
           {teamFull ? <CircleCheckBig /> : <UserPlus />}
 
-          {teamFull ? "Equipo completo" : `Añadir jugador ${remainingMsg}`}
+          {teamFull
+            ? <span className="font-bold">Equipo completo</span>
+            : <>Añadir jugador <span className="font-bold">{remainingMsg}</span></>
+          }
         </Button>
       </DialogTrigger>
 
