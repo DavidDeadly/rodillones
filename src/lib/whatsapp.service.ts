@@ -1,9 +1,10 @@
 import { WHAPI_TOKEN, ZAPLY_INSTANCE, ZAPLY_TOKEN } from "./env";
 import { getGroup } from "./groups.repository";
 
+const TEST_GROUP_ID = "120363382062731337@g.us";
 const GROUP_ID =
 	process.env.NODE_ENV === "production"
-		? "120363382062731337@g.us"
+		? TEST_GROUP_ID
 		: "573506925825@s.whatsapp.net";
 
 interface SendMessage {
@@ -40,7 +41,7 @@ export interface Config {
 }
 
 export async function getGroupParticipants(): Promise<string[]> {
-	const group = await getGroup(GROUP_ID);
+	const group = await getGroup(TEST_GROUP_ID);
 
 	const notFound = !group;
 	if (notFound) throw new Error("Could get group participants");

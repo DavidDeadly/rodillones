@@ -60,7 +60,6 @@ interface PlayerCardProps {
   team: string,
   player: Player,
   userId: string
-  isKeeper: boolean,
   isPlayableTeam: boolean,
   action: (registration: PlayerRegistration) => Promise<ActionResult>
 };
@@ -69,8 +68,19 @@ function PlayerCard({ team, player, userId, isPlayableTeam, action }: PlayerCard
   const registerByMe = player.registerBy === userId;
 
   return (
-    <article className="flex items-center justify-around rounded bg-secondary h-10 pl-2">
-      <span className="inline-block flex-1">{player.name}</span>
+    <article className={clsx(
+      "flex items-center justify-around rounded h-10 pl-2 pr-1",
+      {
+        "bg-secondary": !player.isKeeper,
+        "bg-yellow-600": player.isKeeper
+      }
+    )}>
+
+      <span className="inline-block flex-1">
+        {
+          player.isKeeper ? <strong>🧤 {player.name}</strong> : player.name
+        }
+      </span>
 
       {registerByMe && <CancelDialog team={team} playerName={player.name} isPlayableTeam={isPlayableTeam} action={action} />}
     </article>
@@ -90,6 +100,10 @@ function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCard
   const isPlayableTeam = !isExtra;
   const teamFull = isPlayableTeam && players.length >= TEAM_LIMIT;
 
+  const keeper = isPlayableTeam ? players.find((player) => player.isKeeper) : null;
+  const fieldPlayers = isPlayableTeam ? players.filter((player) => !player.isKeeper) : players;
+  const showKeeperAlert = isPlayableTeam && !keeper && Boolean(players.length);
+
   return (
     <Card className={clsx(
       "grid w-72 grid-rows-[auto_1fr_auto]",
@@ -104,7 +118,27 @@ function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCard
       <CardContent>
         <div className="flex flex-col gap-2">
           {
-            players.length === 0 &&
+            keeper && <PlayerCard
+              key={keeper.name}
+              team={team}
+              player={keeper}
+              userId={userId}
+              isPlayableTeam={isPlayableTeam}
+              action={remove}
+            />
+          }
+
+          {
+            showKeeperAlert && 
+              <Alert className={clsx("bg-yellow-600", { "animate-pulse": isPlayableTeam })}>
+                <AlertTitle>
+                  ¡Necesitamos GATO!
+                </AlertTitle>
+              </Alert>
+          }
+
+          {
+            fieldPlayers.length === 0 &&
               <Alert className={clsx({ "animate-pulse": isPlayableTeam })}>
                 <AlertTitle>
                   ¡Esperando jugadores!
@@ -112,13 +146,12 @@ function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCard
               </Alert>
           }
 
-          {players.map((player, index) =>
+          {fieldPlayers.map((player) =>
             <PlayerCard
               key={player.name}
               team={team}
               player={player}
               userId={userId}
-              isKeeper={index === 0}
               isPlayableTeam={isPlayableTeam}
               action={remove}
             />
