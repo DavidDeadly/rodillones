@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { ACTION, EVENT_DATA, TEAM_LIMIT } from "#/lib/constants";
 import { DB_PASS, DB_USER } from "#/lib/env";
-import { events, DocEvent } from "./db/client";
+import { events, DocEvent, EventStatus } from "./db/client";
 
 const uri = `mongodb+srv://${DB_USER}:${DB_PASS}@main.vqq3x.mongodb.net/?retryWrites=true&w=majority&appName=main`;
 const client = new MongoClient(uri, {
@@ -65,7 +65,25 @@ export async function unregisterPlayer(
 	const invalidId = !validation.success;
 	if (invalidId) throw new Error("Not a valid id");
 
-	const docEvent = await events.findOneAndUpdate(
+	const docEvent = await events.findOne({
+		_id: new ObjectId(validation.data),
+	});
+
+	const notFound = !docEvent;
+	if (notFound)
+		return {
+			error: true,
+			msg: "Este evento no existe",
+		};
+
+	if (docEvent.status === EventStatus.FINISHED) {
+		return {
+			error: true,
+			msg: "Este evento ya está cerrado",
+		};
+	}
+
+	const updatedDoc = await events.findOneAndUpdate(
 		{ _id: new ObjectId(validation.data) },
 		{
 			$pull: {
@@ -77,14 +95,13 @@ export async function unregisterPlayer(
 		},
 	);
 
-	const notFound = !docEvent;
-	if (notFound)
+	if (!updatedDoc)
 		return {
 			error: true,
-			msg: "Este evento no existe",
+			msg: "El evento desapareció completamente!",
 		};
 
-	const { _id, date, ...rest } = docEvent;
+	const { _id, date, ...rest } = updatedDoc;
 	const event = {
 		id: _id.toString(),
 		date: new Date(date),
@@ -115,6 +132,13 @@ export async function registerPlayer(
 			error: true,
 			msg: "Este evento no existe",
 		};
+
+	if (docEvent.status === EventStatus.FINISHED) {
+		return {
+			error: true,
+			msg: "Este evento ya está cerrado",
+		};
+	}
 
 	const players = docEvent.teams[team] ?? [];
 	const keeper = players.find((player) => player.isKeeper);

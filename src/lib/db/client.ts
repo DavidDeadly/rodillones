@@ -29,9 +29,14 @@ export type Address = {
 	url: string;
 };
 
+export const enum EventStatus {
+	FINISHED = "FINISHED",
+}
+
 export interface DocEvent {
 	_id: ObjectId;
 	date: string;
+	status: EventStatus;
 	address: Address;
 	description: string;
 	teams: Record<string, Team>;
