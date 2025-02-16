@@ -80,7 +80,7 @@ function PlayerCard({ team, player, userId, isPlayableTeam, action }: PlayerCard
 
       <span className="inline-block flex-1">
         {
-          player.isKeeper ? <strong>🧤 {player.name}</strong> : player.name
+          player.isKeeper ? `🧤 ${player.name}` : player.name
         }
       </span>
 
@@ -95,7 +95,7 @@ export interface TeamCardProps {
   isExtra: boolean,
   userId: string,
   register: (registration: PlayerRegistration) => Promise<ActionResult>
-  remove: (registration: PlayerRegistration) => Promise<ActionResult>
+  remove: (registration: Omit<PlayerRegistration, 'isKeeper'>) => Promise<ActionResult>
 }
 
 function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCardProps) {
@@ -134,7 +134,7 @@ function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCard
             showKeeperAlert && 
               <Alert className={clsx("bg-yellow-600", { "animate-pulse": isPlayableTeam })}>
                 <AlertTitle>
-                  ¡Necesitamos GATO!
+                  <strong>¡Necesitamos GATO!</strong>
                 </AlertTitle>
               </Alert>
           }
@@ -143,7 +143,7 @@ function TeamCard({ team, players, register, remove, isExtra, userId }: TeamCard
             fieldPlayers.length === 0 &&
               <Alert className={clsx({ "animate-pulse": isPlayableTeam })}>
                 <AlertTitle>
-                  ¡Esperando jugadores!
+                  <strong>¡Esperando jugadores!</strong>
                 </AlertTitle>
               </Alert>
           }
@@ -332,6 +332,8 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
   });
 
   const remainingMsg = isPlayableTeam ? `(${leftWord} ${playersLeft})` : "";
+  const noKeeperYet = !players.some(player => player.isKeeper);
+  const showKeeperCheck = isPlayableTeam && noKeeperYet;
 
   const handleRegister = async (): Promise<void> => {
     const res = await action({ team, playerName, isKeeper });
@@ -353,6 +355,7 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
     setIsKeeper(onlyNeedKeeper);
   }, [players, isPlayableTeam]);
 
+  const playerType = onlyKeeperLeft ? 'arquero' : 'jugador';
   const titleConnector = isPlayableTeam ? "para el equipo": "en";
 
   return (
@@ -369,7 +372,7 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
 
           {teamFull
             ? <span className="font-bold">Equipo completo</span>
-            : <>Añadir jugador <span className="font-bold">{remainingMsg}</span></>
+            : <>Añadir {playerType} <span className="font-bold">{remainingMsg}</span></>
           }
         </Button>
       </DialogTrigger>
@@ -406,8 +409,9 @@ export function RegisterDialog({ team, players, isPlayableTeam, action }: Regist
 
             <SubmitButton />
           </section>
+
           {
-            isPlayableTeam && 
+            showKeeperCheck &&
               <section className="flex gap-2">
                 <Checkbox
                   id="isKeeper"
